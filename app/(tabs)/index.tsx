@@ -13,11 +13,13 @@ import {
   ScrollView,
   Dimensions,
   PixelRatio,
+  StatusBar as RNStatusBar,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import Constants from "expo-constants";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -92,6 +94,17 @@ export default function HomeScreen() {
   // Update device info when component mounts
   useEffect(() => {
     setDeviceInfo(getDeviceInfo());
+  }, []);
+
+  // Ensure status bar is visible
+  useEffect(() => {
+    // Make sure status bar is visible on home screen
+    RNStatusBar.setHidden(false);
+    RNStatusBar.setBarStyle("light-content");
+
+    if (Platform.OS === "android") {
+      RNStatusBar.setBackgroundColor("#1E1E1E");
+    }
   }, []);
 
   const handleGenerate = async () => {

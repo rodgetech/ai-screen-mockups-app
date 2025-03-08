@@ -147,6 +147,7 @@ export default function PreviewScreen() {
           },
           body: JSON.stringify({
             userPrompt: editPrompt.trim(),
+            chatID: CHAT_ID,
           }),
         }
       );
