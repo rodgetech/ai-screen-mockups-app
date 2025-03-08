@@ -1,74 +1,427 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Image,
+  Alert,
+  Keyboard,
+  TouchableWithoutFeedback,
+  ScrollView,
+  Dimensions,
+  PixelRatio,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import Constants from "expo-constants";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+
+// Declare global variable for HTML content
+declare global {
+  var generatedHtml: string;
+  var editedHtml: string;
+}
+
+// Get device information
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const PIXEL_RATIO = PixelRatio.get();
+const FONT_SCALE = PixelRatio.getFontScale();
+export const CHAT_ID = "rodgetech";
+
+// Function to get device model information
+const getDeviceInfo = () => {
+  // Try to determine if it's an iPhone and which model
+  let deviceModel = "Unknown";
+  let osVersion =
+    Platform.OS === "ios" ? Platform.Version : `Android ${Platform.Version}`;
+  const { width, height } = Dimensions.get("window");
+
+  if (Platform.OS === "ios") {
+    // This is a simplified way to determine iPhone models
+    // A more comprehensive solution would use native modules
+    if (
+      height === 812 ||
+      height === 844 ||
+      height === 852 ||
+      height === 896 ||
+      height === 926 ||
+      height === 932
+    ) {
+      deviceModel = "iPhone with notch (X or newer)";
+
+      if (height === 812 && width === 375) {
+        deviceModel = "iPhone X/XS/11 Pro/12 mini/13 mini";
+      } else if (height === 896 && width === 414) {
+        deviceModel = "iPhone XR/XS Max/11/11 Pro Max";
+      } else if (height === 844 && width === 390) {
+        deviceModel = "iPhone 12/12 Pro/13/13 Pro/14";
+      } else if (height === 926 && width === 428) {
+        deviceModel = "iPhone 12 Pro Max/13 Pro Max/14 Plus";
+      } else if (height === 852 && width === 393) {
+        deviceModel = "iPhone 14 Pro";
+      } else if (height === 932 && width === 430) {
+        deviceModel = "iPhone 14 Pro Max/15 Pro Max";
+      }
+    } else {
+      deviceModel = "iPhone 8 or earlier";
+    }
+  } else {
+    deviceModel = `Android device (${width}x${height})`;
+  }
+
+  return {
+    deviceModel,
+    osVersion,
+    platform: Platform.OS,
+    isNotchDevice: deviceModel.includes("notch"),
+  };
+};
 
 export default function HomeScreen() {
+  const [prompt, setPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const router = useRouter();
+  const [deviceInfo, setDeviceInfo] = useState(getDeviceInfo());
+
+  // Update device info when component mounts
+  useEffect(() => {
+    setDeviceInfo(getDeviceInfo());
+  }, []);
+
+  const handleGenerate = async () => {
+    // Dismiss keyboard when generating
+    Keyboard.dismiss();
+
+    if (!prompt.trim()) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setIsGenerating(true);
+
+    try {
+      // Get safe area insets
+      const safeAreaTop = Platform.OS === "ios" ? 47 : 24; // Approximate values
+      const safeAreaBottom = Platform.OS === "ios" ? 34 : 16; // Approximate values
+
+      // Create an enhanced prompt with device information
+      const enhancedPrompt = {
+        chatID: CHAT_ID,
+        userPrompt: prompt.trim(),
+        deviceInfo: {
+          platform: Platform.OS,
+          model: deviceInfo.deviceModel,
+          dimensions: {
+            width: SCREEN_WIDTH,
+            height: SCREEN_HEIGHT,
+            pixelRatio: PIXEL_RATIO,
+            fontScale: FONT_SCALE,
+          },
+          safeArea: {
+            top: safeAreaTop,
+            bottom: safeAreaBottom,
+            left: 0,
+            right: 0,
+          },
+          isNotchDevice: deviceInfo.isNotchDevice,
+          osVersion: deviceInfo.osVersion,
+        },
+        renderingHints: [
+          "Use native-looking UI components for the specified platform",
+          "Respect safe areas, especially on notched devices",
+          "Use appropriate font sizes considering the device's pixel ratio",
+          "Optimize layout for the specific screen dimensions",
+          "Follow platform design guidelines (iOS/Material Design)",
+        ],
+      };
+
+      console.log(JSON.stringify(enhancedPrompt, null, 2));
+
+      // Make a POST request to the API endpoint
+      const response = await fetch(
+        "https://s4ofd6.buildship.run/generate-mockup-html",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(enhancedPrompt),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data && data.html) {
+        // Store the HTML content in a global variable instead of passing it through URL params
+        global.generatedHtml = data.html;
+
+        // Navigate to preview screen without passing the large HTML content in URL
+        router.push({
+          pathname: "/preview",
+          params: { source: "generated" },
+        });
+      } else {
+        throw new Error("Invalid response from API");
+      }
+    } catch (error) {
+      console.error("Error generating mockup:", error);
+      Alert.alert(
+        "Generation Failed",
+        "There was an error generating your mockup. Please try again.",
+        [{ text: "OK" }]
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
+      >
+        <StatusBar style="light" />
+
+        <ThemedView style={styles.header}>
+          <Image
+            source={require("@/assets/images/partial-react-logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <ThemedText style={styles.headerTitle}>AI Screen Mockups</ThemedText>
+        </ThemedView>
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <ThemedView style={styles.content}>
+            <ThemedText style={styles.title}>
+              Generate App Screen Mockups
+            </ThemedText>
+            <ThemedText style={styles.subtitle}>
+              Describe the screen you want to create and we'll generate a mockup
+              for you.
+            </ThemedText>
+
+            <ThemedView style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., A login screen with email and password fields"
+                placeholderTextColor="#999"
+                value={prompt}
+                onChangeText={setPrompt}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+                returnKeyType="done"
+                blurOnSubmit={true}
+                onSubmitEditing={Keyboard.dismiss}
+              />
+            </ThemedView>
+
+            <ThemedView style={styles.examplesContainer}>
+              <ThemedText style={styles.examplesTitle}>
+                Try these examples:
+              </ThemedText>
+              <TouchableOpacity
+                style={styles.exampleButton}
+                onPress={() => {
+                  setPrompt("A login screen with email and password fields");
+                  Keyboard.dismiss();
+                }}
+              >
+                <Ionicons name="log-in-outline" size={18} color="#007AFF" />
+                <ThemedText style={styles.exampleText}>Login Screen</ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.exampleButton}
+                onPress={() => {
+                  setPrompt(
+                    "A user profile screen with avatar, stats, and bio"
+                  );
+                  Keyboard.dismiss();
+                }}
+              >
+                <Ionicons name="person-outline" size={18} color="#007AFF" />
+                <ThemedText style={styles.exampleText}>
+                  Profile Screen
+                </ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.exampleButton}
+                onPress={() => {
+                  setPrompt("A dashboard with statistics and recent activity");
+                  Keyboard.dismiss();
+                }}
+              >
+                <Ionicons
+                  name="stats-chart-outline"
+                  size={18}
+                  color="#007AFF"
+                />
+                <ThemedText style={styles.exampleText}>
+                  Dashboard Screen
+                </ThemedText>
+              </TouchableOpacity>
+            </ThemedView>
+
+            <TouchableOpacity
+              style={[
+                styles.generateButton,
+                (!prompt.trim() || isGenerating) &&
+                  styles.generateButtonDisabled,
+              ]}
+              onPress={handleGenerate}
+              disabled={!prompt.trim() || isGenerating}
+            >
+              {isGenerating ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Ionicons
+                    name="flash-outline"
+                    size={20}
+                    color="#fff"
+                    style={styles.buttonIcon}
+                  />
+                  <ThemedText style={styles.generateButtonText}>
+                    Generate Mockup
+                  </ThemedText>
+                </>
+              )}
+            </TouchableOpacity>
+          </ThemedView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: "#1E1E1E",
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  scrollView: {
+    flex: 1,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  scrollContent: {
+    flexGrow: 1,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+    backgroundColor: "#007AFF",
+  },
+  logo: {
+    width: 30,
+    height: 30,
+    marginRight: 10,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "#FFFFFF",
+  },
+  subtitle: {
+    fontSize: 17,
+    color: "#CCCCCC",
+    marginBottom: 24,
+    lineHeight: 24,
+  },
+  inputContainer: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    marginBottom: 24,
+  },
+  input: {
+    fontSize: 17,
+    color: "#333",
+    minHeight: 100,
+  },
+  examplesContainer: {
+    marginBottom: 24,
+  },
+  examplesTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
+    color: "#FFFFFF",
+  },
+  exampleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  exampleText: {
+    marginLeft: 10,
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#333",
+  },
+  generateButton: {
+    backgroundColor: "#007AFF",
+    borderRadius: 12,
+    padding: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  generateButtonDisabled: {
+    backgroundColor: "#6e6e6e",
+  },
+  generateButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  buttonIcon: {
+    marginRight: 10,
   },
 });
