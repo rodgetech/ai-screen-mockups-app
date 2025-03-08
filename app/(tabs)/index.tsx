@@ -18,7 +18,6 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import Constants from "expo-constants";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -193,10 +192,11 @@ export default function HomeScreen() {
         <StatusBar style="light" />
 
         <ThemedView style={styles.header}>
-          <Image
-            source={require("@/assets/images/partial-react-logo.png")}
+          <Ionicons
+            name="bulb-outline"
+            size={24}
+            color="#fff"
             style={styles.logo}
-            resizeMode="contain"
           />
           <ThemedText style={styles.headerTitle}>AI Screen Mockups</ThemedText>
         </ThemedView>
@@ -328,11 +328,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
-    backgroundColor: "#007AFF",
+    backgroundColor: "#1E1E1E",
   },
   logo: {
-    width: 30,
-    height: 30,
     marginRight: 10,
   },
   headerTitle: {
@@ -349,6 +347,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
     color: "#FFFFFF",
+    lineHeight: 28,
   },
   subtitle: {
     fontSize: 17,
