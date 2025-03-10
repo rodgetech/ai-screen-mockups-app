@@ -22,6 +22,7 @@ import * as Haptics from "expo-haptics";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useGenerateMockup } from "@/app/api/mockups";
+import { Button } from "@/components/ui/Button";
 
 // Declare global variable for HTML content
 declare global {
@@ -263,31 +264,13 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </ThemedView>
 
-            <TouchableOpacity
-              style={[
-                styles.generateButton,
-                (!prompt.trim() || isGenerating) &&
-                  styles.generateButtonDisabled,
-              ]}
+            <Button
+              title="Generate Mockup"
+              icon={{ name: "flash", size: 20 }}
               onPress={handleGenerate}
-              disabled={!prompt.trim() || isGenerating}
-            >
-              {isGenerating ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <>
-                  <Ionicons
-                    name="flash-outline"
-                    size={20}
-                    color="#fff"
-                    style={styles.buttonIcon}
-                  />
-                  <ThemedText style={styles.generateButtonText}>
-                    Generate Mockup
-                  </ThemedText>
-                </>
-              )}
-            </TouchableOpacity>
+              disabled={!prompt.trim()}
+              isLoading={isGenerating}
+            />
           </ThemedView>
         </ScrollView>
       </KeyboardAvoidingView>

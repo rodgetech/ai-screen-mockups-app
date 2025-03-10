@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   buttonDisabled: {
-    backgroundColor: "#6e6e6e",
+    backgroundColor: "#2D2D45",
   },
   buttonIcon: {
     marginRight: 8,
