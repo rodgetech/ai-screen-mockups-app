@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   ActivityIndicator,
@@ -22,6 +22,9 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { BlurView } from "expo-blur";
 import { CHAT_ID } from "./(tabs)";
+import { useEditMockup } from "@/app/api/mockups";
+import ViewShot, { captureRef } from "react-native-view-shot";
+import * as MediaLibrary from "expo-media-library";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -32,8 +35,10 @@ declare global {
 }
 
 export default function PreviewScreen() {
-  const { source } = useLocalSearchParams();
+  const { source, screenId } = useLocalSearchParams();
   const router = useRouter();
+  const viewShotRef = useRef<ViewShot>(null);
+  const [hasMediaPermission, setHasMediaPermission] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showControls, setShowControls] = useState(false);
@@ -42,6 +47,10 @@ export default function PreviewScreen() {
   const [isEditing, setIsEditing] = useState(false);
   const [currentHtml, setCurrentHtml] = useState("");
   const [showStatusBar, setShowStatusBar] = useState(false);
+  const [currentScreenId, setCurrentScreenId] = useState<string | null>(
+    (screenId as string) || null
+  );
+  const { editMockup } = useEditMockup();
 
   // Hide/show status bar based on state
   useEffect(() => {
@@ -66,6 +75,14 @@ export default function PreviewScreen() {
       setError("Failed to load HTML content");
     }
   }, [source]);
+
+  // Request media library permissions on mount
+  useEffect(() => {
+    (async () => {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      setHasMediaPermission(status === "granted");
+    })();
+  }, []);
 
   // Basic HTML wrapper to make content responsive
   const htmlWrapper = `
@@ -108,9 +125,39 @@ export default function PreviewScreen() {
     router.back();
   };
 
-  const handleShare = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // In a real app, this would trigger the share functionality
+  const handleScreenshot = async () => {
+    if (!hasMediaPermission) {
+      Alert.alert(
+        "Permission Required",
+        "Please grant permission to save screenshots to your photo library.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+
+    if (!viewShotRef.current) {
+      console.error("ViewShot ref is not available");
+      return;
+    }
+
+    try {
+      // Temporarily hide controls
+      setShowControls(false);
+
+      // Small delay to ensure UI updates before screenshot
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      const uri = await captureRef(viewShotRef);
+      await MediaLibrary.saveToLibraryAsync(uri);
+      Alert.alert("Success", "Screenshot saved to photo library!");
+    } catch (error) {
+      console.error("Error taking screenshot:", error);
+      Alert.alert("Error", "Failed to save screenshot");
+    } finally {
+      // Restore controls after screenshot is taken
+      setShowControls(true);
+    }
   };
 
   const toggleControls = () => {
@@ -129,7 +176,7 @@ export default function PreviewScreen() {
   };
 
   const handleEditSubmit = async () => {
-    if (!editPrompt.trim()) {
+    if (!editPrompt.trim() || !currentScreenId) {
       return;
     }
 
@@ -137,36 +184,18 @@ export default function PreviewScreen() {
     setShowEditModal(false);
 
     try {
-      // Make a POST request to the API endpoint with the edit prompt
-      const response = await fetch(
-        "https://s4ofd6.buildship.run/generate-mockup-html",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userPrompt: editPrompt.trim(),
-            chatID: CHAT_ID,
-          }),
-        }
-      );
+      const data = await editMockup({
+        screenId: currentScreenId,
+        userPrompt: editPrompt.trim(),
+      });
 
-      if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data && data.html) {
-        // Update the current HTML with the edited version
-        setCurrentHtml(data.html);
-        // Also store in global variable for persistence
-        global.editedHtml = data.html;
-        setEditPrompt("");
-      } else {
-        throw new Error("Invalid response from API");
-      }
+      // Update the current HTML with the edited version
+      setCurrentHtml(data.html);
+      // Update the screenId
+      setCurrentScreenId(data.screenId);
+      // Also store in global variable for persistence
+      global.editedHtml = data.html;
+      setEditPrompt("");
     } catch (error) {
       console.error("Error editing mockup:", error);
       Alert.alert(
@@ -180,7 +209,7 @@ export default function PreviewScreen() {
   };
 
   return (
-    <View style={styles.fullScreenContainer}>
+    <ViewShot ref={viewShotRef} style={styles.fullScreenContainer}>
       {/* No StatusBar component - we're handling it with useEffect */}
 
       {error ? (
@@ -263,9 +292,9 @@ export default function PreviewScreen() {
 
                 <TouchableOpacity
                   style={[styles.controlButton, styles.controlButtonMargin]}
-                  onPress={handleShare}
+                  onPress={handleScreenshot}
                 >
-                  <Ionicons name="share-outline" size={22} color="#fff" />
+                  <Ionicons name="camera-outline" size={22} color="#fff" />
                 </TouchableOpacity>
               </View>
             </SafeAreaView>
@@ -333,7 +362,7 @@ export default function PreviewScreen() {
           </Modal>
         </View>
       )}
-    </View>
+    </ViewShot>
   );
 }
 
@@ -417,6 +446,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 16,
+    marginHorizontal: 20,
     paddingTop: Platform.OS === "ios" ? 50 : 16,
   },
   controlsRight: {

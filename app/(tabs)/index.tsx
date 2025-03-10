@@ -6,7 +6,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Image,
   Alert,
   Keyboard,
   TouchableWithoutFeedback,
@@ -22,6 +21,7 @@ import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { useGenerateMockup } from "@/app/api/mockups";
 
 // Declare global variable for HTML content
 declare global {
@@ -89,6 +89,7 @@ export default function HomeScreen() {
   const [isGenerating, setIsGenerating] = useState(false);
   const router = useRouter();
   const [deviceInfo, setDeviceInfo] = useState(getDeviceInfo());
+  const { generateMockup } = useGenerateMockup();
 
   // Update device info when component mounts
   useEffect(() => {
@@ -151,38 +152,19 @@ export default function HomeScreen() {
         ],
       };
 
-      console.log(JSON.stringify(enhancedPrompt, null, 2));
+      const data = await generateMockup(enhancedPrompt);
 
-      // Make a POST request to the API endpoint
-      const response = await fetch(
-        "https://s4ofd6.buildship.run/generate-mockup-html",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(enhancedPrompt),
-        }
-      );
+      // Store the HTML content in a global variable instead of passing it through URL params
+      global.generatedHtml = data.html;
 
-      if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data && data.html) {
-        // Store the HTML content in a global variable instead of passing it through URL params
-        global.generatedHtml = data.html;
-
-        // Navigate to preview screen without passing the large HTML content in URL
-        router.push({
-          pathname: "/preview",
-          params: { source: "generated" },
-        });
-      } else {
-        throw new Error("Invalid response from API");
-      }
+      // Navigate to preview screen with the screenId
+      router.push({
+        pathname: "/preview",
+        params: {
+          source: "generated",
+          screenId: data.screenId,
+        },
+      });
     } catch (error) {
       console.error("Error generating mockup:", error);
       Alert.alert(
