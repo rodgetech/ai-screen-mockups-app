@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
-    marginBottom: 4,
+    marginBottom: 12,
   },
   input: {
     fontSize: 17,

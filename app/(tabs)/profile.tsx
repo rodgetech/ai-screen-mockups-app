@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    paddingTop: Platform.OS === "ios" ? 60 : 40,
+    paddingTop: Platform.OS === "ios" ? 80 : 40,
     paddingBottom: 32,
   },
   avatarContainer: {

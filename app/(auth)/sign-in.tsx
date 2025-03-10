@@ -1,19 +1,39 @@
-import { useSignIn } from "@clerk/clerk-expo";
+import { useSignIn, useSSO } from "@clerk/clerk-expo";
 import { Link, useRouter } from "expo-router";
 import {
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   View,
+  Pressable,
 } from "react-native";
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
+import * as WebBrowser from "expo-web-browser";
+import * as AuthSession from "expo-auth-session";
+
+export const useWarmUpBrowser = () => {
+  useEffect(() => {
+    // Preloads the browser for Android devices to reduce authentication load time
+    // See: https://docs.expo.dev/guides/authentication/#improving-user-experience
+    void WebBrowser.warmUpAsync();
+    return () => {
+      // Cleanup: closes browser when component unmounts
+      void WebBrowser.coolDownAsync();
+    };
+  }, []);
+};
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function Page() {
+  useWarmUpBrowser();
+
+  const { startSSOFlow } = useSSO();
+
   const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
 
@@ -58,6 +78,32 @@ export default function Page() {
       console.error("Some error occurred", err);
     }
   }, [isLoaded, emailAddress, password]);
+
+  const onGoogleSignInPress = useCallback(async () => {
+    try {
+      // Start the authentication process by calling `startSSOFlow()`
+      const { createdSessionId, setActive, signIn, signUp } =
+        await startSSOFlow({
+          strategy: "oauth_google",
+          // Defaults to current path
+          redirectUrl: AuthSession.makeRedirectUri(),
+        });
+
+      // If sign in was successful, set the active session
+      if (createdSessionId) {
+        setActive!({ session: createdSessionId });
+      } else {
+        // If there is no `createdSessionId`,
+        // there are missing requirements, such as MFA
+        // Use the `signIn` or `signUp` returned from `startSSOFlow`
+        // to handle next steps
+      }
+    } catch (err) {
+      // See https://clerk.com/docs/custom-flows/error-handling
+      // for more info on error handling
+      console.error(JSON.stringify(err, null, 2));
+    }
+  }, []);
 
   const isDisabled = !isLoaded || !emailAddress.trim() || !password.trim();
 
@@ -123,12 +169,28 @@ export default function Page() {
           </ThemedText>
         )}
 
+        <View style={styles.dividerContainer}>
+          <View style={styles.dividerLine} />
+          <ThemedText style={styles.dividerText}>or</ThemedText>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <Button
+          title="Continue with Google"
+          onPress={onGoogleSignInPress}
+          icon={{ name: "logo-google" }}
+          variant="secondary"
+          style={styles.socialButton}
+        />
+
         <View style={styles.signUpContainer}>
           <ThemedText style={styles.signUpText}>
             Don't have an account?
           </ThemedText>
           <Link href="/sign-up" replace asChild>
-            <ThemedText style={styles.signUpLink}>Sign up</ThemedText>
+            <Pressable>
+              <ThemedText style={styles.signUpLink}>Sign up</ThemedText>
+            </Pressable>
           </Link>
         </View>
       </ThemedView>
@@ -168,7 +230,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
-    marginBottom: 4,
+    marginBottom: 12,
   },
   input: {
     fontSize: 17,
@@ -186,6 +248,25 @@ const styles = StyleSheet.create({
   },
   signInButton: {
     marginTop: 8,
+  },
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#333333",
+  },
+  dividerText: {
+    color: "#CCCCCC",
+    paddingHorizontal: 16,
+    fontSize: 16,
+  },
+  socialButton: {
+    backgroundColor: "#FFFFFF",
+    marginBottom: 16,
   },
   signUpContainer: {
     flexDirection: "row",
