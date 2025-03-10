@@ -19,7 +19,6 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import Constants from "expo-constants";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -204,16 +203,6 @@ export default function HomeScreen() {
       >
         <StatusBar style="light" />
 
-        <ThemedView style={styles.header}>
-          <Ionicons
-            name="bulb-outline"
-            size={24}
-            color="#fff"
-            style={styles.logo}
-          />
-          <ThemedText style={styles.headerTitle}>AI Screen Mockups</ThemedText>
-        </ThemedView>
-
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -335,25 +324,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: "#1E1E1E",
-  },
-  logo: {
-    marginRight: 10,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#fff",
-  },
   content: {
     flex: 1,
     padding: 20,
+    paddingTop: Platform.OS === "ios" ? 80 : 40,
   },
   title: {
     fontSize: 28,
