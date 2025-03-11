@@ -153,3 +153,42 @@ export function useEditMockup() {
 
   return { editMockup };
 }
+
+export function useGetMockup() {
+  const { getToken } = useAuth();
+
+  const getMockup = useCallback(
+    async (screenId: string): Promise<GenerateMockupResponse> => {
+      try {
+        const token = await getToken();
+
+        if (!token) {
+          throw new Error("Not authenticated");
+        }
+
+        const response = await fetch(
+          `https://s4ofd6.buildship.run/get-mockup?screenId=${screenId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        return await response.json();
+      } catch (error) {
+        console.error("Error fetching mockup:", error);
+        throw error;
+      }
+    },
+    [getToken]
+  );
+
+  return { getMockup };
+}

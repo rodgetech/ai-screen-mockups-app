@@ -192,9 +192,7 @@ export default function HomeScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <ThemedView style={styles.content}>
-            <ThemedText style={styles.title}>
-              Generate App Screen Mockups
-            </ThemedText>
+            <ThemedText style={styles.title}>Generate Mockup</ThemedText>
             <ThemedText style={styles.subtitle}>
               Describe the screen you want to create and we'll generate a mockup
               for you.
@@ -204,7 +202,7 @@ export default function HomeScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="e.g., A login screen with email and password fields"
-                placeholderTextColor="#999"
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
                 value={prompt}
                 onChangeText={setPrompt}
                 multiline
@@ -221,13 +219,17 @@ export default function HomeScreen() {
                 Try these examples:
               </ThemedText>
               <TouchableOpacity
-                style={styles.exampleButton}
+                style={[styles.exampleButton, styles.exampleButtonFirst]}
                 onPress={() => {
                   setPrompt("A login screen with email and password fields");
                   Keyboard.dismiss();
                 }}
               >
-                <Ionicons name="log-in-outline" size={18} color="#007AFF" />
+                <Ionicons
+                  name="log-in-outline"
+                  size={22}
+                  color="rgba(255, 255, 255, 0.9)"
+                />
                 <ThemedText style={styles.exampleText}>Login Screen</ThemedText>
               </TouchableOpacity>
 
@@ -240,14 +242,18 @@ export default function HomeScreen() {
                   Keyboard.dismiss();
                 }}
               >
-                <Ionicons name="person-outline" size={18} color="#007AFF" />
+                <Ionicons
+                  name="person-outline"
+                  size={22}
+                  color="rgba(255, 255, 255, 0.9)"
+                />
                 <ThemedText style={styles.exampleText}>
                   Profile Screen
                 </ThemedText>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.exampleButton}
+                style={[styles.exampleButton, styles.exampleButtonLast]}
                 onPress={() => {
                   setPrompt("A dashboard with statistics and recent activity");
                   Keyboard.dismiss();
@@ -255,8 +261,8 @@ export default function HomeScreen() {
               >
                 <Ionicons
                   name="stats-chart-outline"
-                  size={18}
-                  color="#007AFF"
+                  size={22}
+                  color="rgba(255, 255, 255, 0.9)"
                 />
                 <ThemedText style={styles.exampleText}>
                   Dashboard Screen
@@ -281,17 +287,19 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1E1E1E",
+    backgroundColor: "#1E1E2E",
   },
   scrollView: {
     flex: 1,
+    backgroundColor: "#1E1E2E",
   },
   scrollContent: {
     flexGrow: 1,
+    backgroundColor: "#1E1E2E",
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: 24,
     paddingTop: Platform.OS === "ios" ? 80 : 40,
   },
   title: {
@@ -308,48 +316,59 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   inputContainer: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: "rgba(45, 45, 69, 0.75)",
+    borderRadius: 16,
+    padding: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-    marginBottom: 24,
+    shadowRadius: 8,
+    elevation: 8,
+    marginBottom: 32,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
   input: {
     fontSize: 17,
-    color: "#333",
-    minHeight: 100,
+    color: "#FFFFFF",
+    minHeight: 120,
+    lineHeight: 24,
   },
   examplesContainer: {
-    marginBottom: 24,
+    marginBottom: 32,
   },
   examplesTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 12,
+    marginBottom: 16,
     color: "#FFFFFF",
   },
   exampleButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 10,
+    backgroundColor: "rgba(45, 45, 69, 0.75)",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  exampleButtonFirst: {
+    marginTop: 4,
+  },
+  exampleButtonLast: {
+    marginBottom: 0,
   },
   exampleText: {
-    marginLeft: 10,
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#333",
+    marginLeft: 12,
+    fontSize: 17,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
   generateButton: {
     backgroundColor: "#007AFF",
