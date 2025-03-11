@@ -177,12 +177,19 @@ export default function HomeScreen() {
         },
       });
     } catch (error) {
-      console.error("Error generating mockup:", error);
-      Alert.alert(
-        "Generation Failed",
-        "There was an error generating your mockup. Please try again.",
-        [{ text: "OK" }]
-      );
+      // Only log in development
+      if (__DEV__) {
+        console.log("Debug - Generation error:", error);
+      }
+
+      const errorMessage =
+        error instanceof Error
+          ? error.message.includes("Insufficient credits")
+            ? "You don't have enough credits to generate a mockup. Please purchase more credits to continue."
+            : error.message || "Something went wrong, please try again later."
+          : "Something went wrong, please try again later.";
+
+      Alert.alert("Generation Failed", errorMessage, [{ text: "OK" }]);
     } finally {
       setIsGenerating(false);
     }

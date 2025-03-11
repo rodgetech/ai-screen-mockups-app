@@ -93,12 +93,16 @@ export function useGenerateMockup() {
         );
 
         if (!response.ok) {
-          throw new Error(`API request failed with status ${response.status}`);
+          // Get the error message from the response if possible
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.message || `Request failed with status ${response.status}`
+          );
         }
 
         return await response.json();
       } catch (error) {
-        console.error("Error generating mockup:", error);
+        // Rethrow the error without logging
         throw error;
       }
     },
