@@ -185,7 +185,7 @@ export default function HomeScreen() {
       const errorMessage =
         error instanceof Error
           ? error.message.includes("Insufficient credits")
-            ? "You don't have enough credits to generate a mockup. Please purchase more credits to continue."
+            ? "You don't have enough credits to generate a mockup."
             : error.message || "Something went wrong, please try again later."
           : "Something went wrong, please try again later.";
 

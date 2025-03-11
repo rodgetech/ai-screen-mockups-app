@@ -25,6 +25,7 @@ import { CHAT_ID } from "./(tabs)";
 import { useEditMockup } from "@/app/api/mockups";
 import ViewShot, { captureRef } from "react-native-view-shot";
 import * as MediaLibrary from "expo-media-library";
+import { useCreditsStore } from "@/app/stores/credits";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -51,6 +52,7 @@ export default function PreviewScreen() {
     (screenId as string) || null
   );
   const { editMockup } = useEditMockup();
+  const { credits, setCredits } = useCreditsStore();
 
   // Hide/show status bar based on state
   useEffect(() => {
@@ -195,14 +197,25 @@ export default function PreviewScreen() {
       setCurrentScreenId(data.screenId);
       // Also store in global variable for persistence
       global.editedHtml = data.html;
+
+      // Update credits store with new remaining credits
+      if (credits) {
+        setCredits({
+          ...credits,
+          remainingRevisionCredits: data.remainingRevisionCredits,
+        });
+      }
+
       setEditPrompt("");
     } catch (error) {
-      console.error("Error editing mockup:", error);
-      Alert.alert(
-        "Edit Failed",
-        "There was an error editing your mockup. Please try again.",
-        [{ text: "OK" }]
-      );
+      const errorMessage =
+        error instanceof Error
+          ? error.message.includes("Insufficient credits")
+            ? "You don't have enough revision credits to edit this mockup."
+            : error.message || "Something went wrong, please try again later."
+          : "Something went wrong, please try again later.";
+
+      Alert.alert("Edit Failed", errorMessage, [{ text: "OK" }]);
     } finally {
       setIsEditing(false);
     }
