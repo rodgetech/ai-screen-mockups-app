@@ -1,28 +1,39 @@
 import { useAuth } from "@clerk/clerk-expo";
 import { useCallback } from "react";
 
-export interface Mockup {
-  id: string;
-  title: string;
-  description?: string;
-  imageUrl?: string;
-  createdAt: string;
-  updatedAt: string;
+export interface MockupDeviceInfo {
+  platform: string;
+  model: string;
+  dimensions: {
+    width: number;
+    height: number;
+    pixelRatio: number;
+    fontScale: number;
+  };
+  safeArea: {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+  };
+  isNotchDevice: boolean;
+  osVersion: string;
 }
 
-export function useMockups() {
+export interface Mockup {
+  id: string;
+  screenTitle: string;
+  userId: string;
+  deviceInfo: MockupDeviceInfo;
+  renderingHints: string[];
+}
+
+export const useMockups = () => {
   const { getToken } = useAuth();
 
-  const fetchUserMockups = useCallback(async (): Promise<Mockup[]> => {
+  const fetchUserMockups = async (): Promise<Mockup[]> => {
     try {
-      // Get the session token
       const token = await getToken();
-
-      if (!token) {
-        throw new Error("Not authenticated");
-      }
-
-      // Make the authenticated request
       const response = await fetch(
         "https://s4ofd6.buildship.run/sm-user-mockups",
         {
@@ -35,18 +46,19 @@ export function useMockups() {
       );
 
       if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
+        throw new Error("Failed to fetch mockups");
       }
 
-      return await response.json();
+      const data = await response.json();
+      return data;
     } catch (error) {
       console.error("Error fetching mockups:", error);
       throw error;
     }
-  }, [getToken]);
+  };
 
   return { fetchUserMockups };
-}
+};
 
 export interface GenerateMockupResponse {
   html: string;
@@ -140,4 +152,43 @@ export function useEditMockup() {
   );
 
   return { editMockup };
+}
+
+export function useGetMockup() {
+  const { getToken } = useAuth();
+
+  const getMockup = useCallback(
+    async (screenId: string): Promise<GenerateMockupResponse> => {
+      try {
+        const token = await getToken();
+
+        if (!token) {
+          throw new Error("Not authenticated");
+        }
+
+        const response = await fetch(
+          `https://s4ofd6.buildship.run/get-mockup?screenId=${screenId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        return await response.json();
+      } catch (error) {
+        console.error("Error fetching mockup:", error);
+        throw error;
+      }
+    },
+    [getToken]
+  );
+
+  return { getMockup };
 }

@@ -5,6 +5,7 @@ import {
   TouchableOpacityProps,
   ViewStyle,
   StyleProp,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
@@ -54,15 +55,21 @@ export function Button({
       disabled={disabled || isLoading}
       {...props}
     >
-      {icon && !isLoading && (
-        <Ionicons
-          name={icon.name}
-          size={icon.size || 20}
-          color={iconColor}
-          style={styles.buttonIcon}
-        />
+      {isLoading ? (
+        <ActivityIndicator color={iconColor} />
+      ) : (
+        <>
+          {icon && (
+            <Ionicons
+              name={icon.name}
+              size={icon.size || 20}
+              color={iconColor}
+              style={styles.buttonIcon}
+            />
+          )}
+          <ThemedText style={textStyles}>{title}</ThemedText>
+        </>
       )}
-      <ThemedText style={textStyles}>{title}</ThemedText>
     </TouchableOpacity>
   );
 }
@@ -90,7 +97,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   buttonDisabled: {
-    backgroundColor: "#6e6e6e",
+    backgroundColor: "#2D2D45",
   },
   buttonIcon: {
     marginRight: 8,

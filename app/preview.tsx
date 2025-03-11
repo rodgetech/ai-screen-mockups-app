@@ -283,12 +283,14 @@ export default function PreviewScreen() {
                   />
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[styles.controlButton, styles.controlButtonMargin]}
-                  onPress={handleEditPress}
-                >
-                  <Ionicons name="pencil" size={22} color="#fff" />
-                </TouchableOpacity>
+                {source === "generated" && (
+                  <TouchableOpacity
+                    style={[styles.controlButton, styles.controlButtonMargin]}
+                    onPress={handleEditPress}
+                  >
+                    <Ionicons name="pencil" size={22} color="#fff" />
+                  </TouchableOpacity>
+                )}
 
                 <TouchableOpacity
                   style={[styles.controlButton, styles.controlButtonMargin]}
