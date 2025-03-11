@@ -23,6 +23,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useGenerateMockup } from "@/app/api/mockups";
 import { Button } from "@/components/ui/Button";
+import { useCreditsStore } from "@/app/stores/credits";
 
 // Declare global variable for HTML content
 declare global {
@@ -91,6 +92,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const [deviceInfo, setDeviceInfo] = useState(getDeviceInfo());
   const { generateMockup } = useGenerateMockup();
+  const { credits, setCredits } = useCreditsStore();
 
   // Update device info when component mounts
   useEffect(() => {
@@ -157,6 +159,14 @@ export default function HomeScreen() {
 
       // Store the HTML content in a global variable instead of passing it through URL params
       global.generatedHtml = data.html;
+
+      // Update credits store with new remaining credits
+      if (credits) {
+        setCredits({
+          ...credits,
+          remainingScreenCredits: data.remainingScreenCredits,
+        });
+      }
 
       // Navigate to preview screen with the screenId
       router.push({

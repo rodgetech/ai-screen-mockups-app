@@ -63,6 +63,7 @@ export const useMockups = () => {
 export interface GenerateMockupResponse {
   html: string;
   screenId: string;
+  remainingScreenCredits: number;
 }
 
 export function useGenerateMockup() {

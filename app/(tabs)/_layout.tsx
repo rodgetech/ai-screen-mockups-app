@@ -1,18 +1,27 @@
 import { Tabs } from "expo-router";
 import React, { useEffect } from "react";
 import { Platform, StatusBar } from "react-native";
+import { useAuth } from "@clerk/clerk-expo";
+import { Redirect } from "expo-router";
+import { useUserCredits } from "@/app/api/credits";
 
 import { HapticTab } from "@/components/HapticTab";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { useAuth } from "@clerk/clerk-expo";
-import { Redirect } from "expo-router";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const { isSignedIn } = useAuth();
+  const { loadCredits } = useUserCredits();
+
+  // Initialize credits when tabs layout mounts
+  useEffect(() => {
+    if (isSignedIn) {
+      loadCredits();
+    }
+  }, [isSignedIn]);
 
   if (!isSignedIn) {
     return <Redirect href="/sign-in" />;
