@@ -15,6 +15,7 @@ import { useMockups, Mockup, useGetMockup } from "@/app/api/mockups";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { formatDistanceToNow } from "date-fns";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -61,7 +62,7 @@ function MockupCard({ mockup }: MockupCardProps) {
     <Pressable onPress={handlePress} disabled={isLoading}>
       <ThemedView style={styles.card}>
         <View style={styles.cardContent}>
-          <View style={styles.cardMainContent}>
+          <View style={styles.mainSection}>
             <ThemedText style={styles.cardTitle}>
               {mockup.screenTitle}
             </ThemedText>
@@ -70,6 +71,11 @@ function MockupCard({ mockup }: MockupCardProps) {
                 {mockup.deviceInfo.model}
               </ThemedText>
             </View>
+            <ThemedText style={styles.dateText}>
+              {formatDistanceToNow(new Date(mockup.timestamp), {
+                addSuffix: true,
+              })}
+            </ThemedText>
           </View>
           {isLoading ? (
             <ActivityIndicator
@@ -270,15 +276,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  cardMainContent: {
+  mainSection: {
     flex: 1,
     marginRight: 16,
   },
   cardTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "600",
-    marginBottom: 8,
     color: "#FFFFFF",
+    marginBottom: 12,
+    lineHeight: 28,
   },
   deviceBadge: {
     backgroundColor: "rgba(255, 255, 255, 0.1)",
@@ -286,14 +293,15 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
     alignSelf: "flex-start",
+    marginBottom: 8,
   },
   deviceText: {
     fontSize: 14,
     color: "rgba(255, 255, 255, 0.9)",
   },
-  noMockups: {
-    textAlign: "center",
-    marginTop: 20,
-    opacity: 0.7,
+  dateText: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.5)",
+    fontStyle: "italic",
   },
 });
