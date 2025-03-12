@@ -4,18 +4,24 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Redirect, Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import "react-native-reanimated";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Ionicons } from "@expo/vector-icons";
 import { ClerkLoaded, ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "@/cache";
+import * as SplashScreen from "expo-splash-screen";
+import { View } from "react-native";
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
+// Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
+
+SplashScreen.setOptions({
+  duration: 1000,
+  fade: true,
+});
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -25,20 +31,42 @@ if (!publishableKey) {
   );
 }
 
+function RootLayoutNav() {
+  const colorScheme = useColorScheme();
+
+  return (
+    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="preview"
+          options={{
+            presentation: "fullScreenModal",
+            headerShown: false,
+            animation: "fade",
+            gestureEnabled: false,
+            contentStyle: { backgroundColor: "white" },
+          }}
+        />
+      </Stack>
+      <StatusBar style="auto" />
+    </ThemeProvider>
+  );
+}
+
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     ...Ionicons.font,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
 
-  useEffect(() => {
+  const onLayoutRootView = useCallback(async () => {
     if (loaded) {
-      SplashScreen.hideAsync();
+      await SplashScreen.hideAsync();
     }
   }, [loaded]);
 
@@ -46,33 +74,12 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
-}
-
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-
   return (
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
       <ClerkLoaded>
-        <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-        >
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="preview"
-              options={{
-                presentation: "fullScreenModal",
-                headerShown: false,
-                animation: "fade",
-                gestureEnabled: false,
-                contentStyle: { backgroundColor: "white" },
-              }}
-            />
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
+        <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+          <RootLayoutNav />
+        </View>
       </ClerkLoaded>
     </ClerkProvider>
   );

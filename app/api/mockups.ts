@@ -26,6 +26,7 @@ export interface Mockup {
   userId: string;
   deviceInfo: MockupDeviceInfo;
   renderingHints: string[];
+  timestamp: string; // ISO timestamp string
 }
 
 export const useMockups = () => {
