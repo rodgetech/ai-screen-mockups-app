@@ -14,6 +14,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
+import * as Sentry from "@sentry/react-native";
 
 export const useWarmUpBrowser = () => {
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function Page() {
         await setActive({ session: signInAttempt.createdSessionId });
         router.replace("/");
       } else {
-        console.error(JSON.stringify(signInAttempt, null, 2));
+        Sentry.captureException(signInAttempt);
       }
     } catch (err: any) {
       if (err.errors) {
@@ -74,8 +75,8 @@ export default function Page() {
         setErrors(formErrors);
       } else {
         setErrors({ general: "An error occurred. Please try again." });
+        Sentry.captureException(err);
       }
-      console.error("Some error occurred", err);
     }
   };
 
@@ -102,9 +103,7 @@ export default function Page() {
         // to handle next steps
       }
     } catch (err) {
-      // See https://clerk.com/docs/custom-flows/error-handling
-      // for more info on error handling
-      console.error(JSON.stringify(err, null, 2));
+      Sentry.captureException(err);
     }
   }, []);
 

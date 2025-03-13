@@ -38,6 +38,14 @@
             "backgroundColor": "#1E1E2E"
           }
         }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "rodgetech",
+          "project": "screen-mockups",
+          "url": "https://sentry.io/"
+        }
       ]
     ],
     "experiments": {
