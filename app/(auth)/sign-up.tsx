@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import {
   StyleSheet,
   TextInput,
@@ -8,14 +8,32 @@ import {
   View,
   TouchableWithoutFeedback,
   Keyboard,
+  Image,
 } from "react-native";
-import { useSignUp } from "@clerk/clerk-expo";
+import { useSignUp, useSSO } from "@clerk/clerk-expo";
 import { Link, useRouter } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
+import * as WebBrowser from "expo-web-browser";
+import * as AuthSession from "expo-auth-session";
+import * as Sentry from "@sentry/react-native";
+
+export const useWarmUpBrowser = () => {
+  useEffect(() => {
+    void WebBrowser.warmUpAsync();
+    return () => {
+      void WebBrowser.coolDownAsync();
+    };
+  }, []);
+};
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function SignUpScreen() {
+  useWarmUpBrowser();
+
+  const { startSSOFlow } = useSSO();
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
 
@@ -24,6 +42,25 @@ export default function SignUpScreen() {
   const [pendingVerification, setPendingVerification] = React.useState(false);
   const [code, setCode] = React.useState("");
   const [errors, setErrors] = React.useState<{ [key: string]: string }>({});
+
+  const onGoogleSignInPress = useCallback(async () => {
+    try {
+      const redirectUrl = AuthSession.makeRedirectUri({
+        scheme: "screenmockups",
+        path: "oauth-native-callback",
+      });
+      const { createdSessionId, setActive } = await startSSOFlow({
+        strategy: "oauth_google",
+        redirectUrl,
+      });
+
+      if (createdSessionId) {
+        setActive!({ session: createdSessionId });
+      }
+    } catch (err) {
+      Sentry.captureException(err);
+    }
+  }, [startSSOFlow]);
 
   // Handle submission of sign-up form
   const onSignUpPress = async () => {
@@ -93,6 +130,10 @@ export default function SignUpScreen() {
           style={styles.container}
         >
           <ThemedView style={styles.content}>
+            <Image
+              source={require("@/assets/images/icon-transparent.png")}
+              style={styles.icon}
+            />
             <ThemedText style={styles.title}>Verify Your Email</ThemedText>
             <ThemedText style={styles.subtitle}>
               We've sent a verification code to your email
@@ -148,9 +189,13 @@ export default function SignUpScreen() {
         style={styles.container}
       >
         <ThemedView style={styles.content}>
+          <Image
+            source={require("@/assets/images/icon-transparent.png")}
+            style={styles.icon}
+          />
           <ThemedText style={styles.title}>Create Account</ThemedText>
           <ThemedText style={styles.subtitle}>
-            Sign up to get started with AI Screen Mockups
+            Sign up to get started with Screen Mockups
           </ThemedText>
 
           <View style={styles.inputContainer}>
@@ -206,6 +251,20 @@ export default function SignUpScreen() {
             </ThemedText>
           )}
 
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <ThemedText style={styles.dividerText}>or</ThemedText>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <Button
+            title="Continue with Google"
+            onPress={onGoogleSignInPress}
+            icon={{ name: "logo-google" }}
+            variant="secondary"
+            style={styles.socialButton}
+          />
+
           <View style={styles.signInContainer}>
             <ThemedText style={styles.signInText}>
               Already have an account?
@@ -236,27 +295,31 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: "#FFFFFF",
     lineHeight: 41,
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 17,
     color: "#CCCCCC",
     marginBottom: 32,
     lineHeight: 24,
+    textAlign: "center",
   },
   inputContainer: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: "rgba(45, 45, 69, 0.75)",
+    borderRadius: 16,
+    padding: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowRadius: 8,
+    elevation: 8,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
   input: {
     fontSize: 17,
-    color: "#333",
+    color: "#FFFFFF",
     height: 24,
   },
   errorText: {
@@ -287,5 +350,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#007AFF",
     fontWeight: "600",
+  },
+  icon: {
+    width: 100,
+    height: 100,
+    alignSelf: "center",
+    marginBottom: 24,
+  },
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#333333",
+  },
+  dividerText: {
+    color: "#CCCCCC",
+    paddingHorizontal: 16,
+    fontSize: 16,
+  },
+  socialButton: {
+    backgroundColor: "#FFFFFF",
+    marginBottom: 16,
   },
 });

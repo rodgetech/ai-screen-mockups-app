@@ -7,6 +7,7 @@ import {
   Platform,
   View,
   Pressable,
+  Image,
 } from "react-native";
 import React, { useCallback, useEffect } from "react";
 import { ThemedText } from "@/components/ThemedText";
@@ -115,6 +116,10 @@ export default function Page() {
       style={styles.container}
     >
       <ThemedView style={styles.content}>
+        <Image
+          source={require("@/assets/images/icon-transparent.png")}
+          style={styles.icon}
+        />
         <ThemedText style={styles.title}>Welcome Back</ThemedText>
         <ThemedText style={styles.subtitle}>
           Sign in to your account to continue
@@ -216,27 +221,31 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: "#FFFFFF",
     lineHeight: 41,
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 17,
     color: "#CCCCCC",
     marginBottom: 32,
     lineHeight: 24,
+    textAlign: "center",
   },
   inputContainer: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: "rgba(45, 45, 69, 0.75)",
+    borderRadius: 16,
+    padding: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowRadius: 8,
+    elevation: 8,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
   input: {
     fontSize: 17,
-    color: "#333",
+    color: "#FFFFFF",
   },
   errorText: {
     color: "#ff3b30",
@@ -285,5 +294,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#007AFF",
     fontWeight: "600",
+  },
+  icon: {
+    width: 100,
+    height: 100,
+    alignSelf: "center",
+    marginBottom: 24,
   },
 });
