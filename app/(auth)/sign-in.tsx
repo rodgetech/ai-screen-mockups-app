@@ -42,7 +42,7 @@ export default function Page() {
   const [errors, setErrors] = React.useState<{ [key: string]: string }>({});
 
   // Handle the submission of the sign-in form
-  const onSignInPress = React.useCallback(async () => {
+  const onSignInPress = async () => {
     if (!isLoaded) return;
 
     try {
@@ -77,16 +77,19 @@ export default function Page() {
       }
       console.error("Some error occurred", err);
     }
-  }, [isLoaded, emailAddress, password]);
+  };
 
   const onGoogleSignInPress = useCallback(async () => {
     try {
+      const redirectUrl = AuthSession.makeRedirectUri({
+        scheme: "screenmockups",
+        path: "oauth-native-callback",
+      });
       // Start the authentication process by calling `startSSOFlow()`
       const { createdSessionId, setActive, signIn, signUp } =
         await startSSOFlow({
           strategy: "oauth_google",
-          // Defaults to current path
-          redirectUrl: AuthSession.makeRedirectUri(),
+          redirectUrl,
         });
 
       // If sign in was successful, set the active session

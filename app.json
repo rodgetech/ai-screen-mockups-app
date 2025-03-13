@@ -5,11 +5,15 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/sm-icon.png",
-    "scheme": "myapp",
+    "scheme": "screenmockups",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.rodgetech.screenmockups",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -28,16 +32,24 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/icon-transparent.png",
-          "backgroundColor": "#000000",
+          "backgroundColor": "#1E1E2E",
           "dark": {
             "image": "./assets/images/icon-transparent.png",
-            "backgroundColor": "#000000"
+            "backgroundColor": "#1E1E2E"
           }
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "56e6bdc8-8106-4cae-935f-2ef2758c5ba1"
+      }
     }
   }
 }
