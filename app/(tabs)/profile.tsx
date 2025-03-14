@@ -46,15 +46,22 @@ export default function ProfileScreen() {
         await Purchases.configure({ apiKey: APIKeys.apple });
       }
 
+      // Set user attributes for webhook metadata
+      if (user?.id) {
+        await Purchases.setAttributes({
+          userId: user.id,
+          email: user.emailAddresses[0]?.emailAddress || "",
+        });
+      }
+
       const offerings = await Purchases.getOfferings();
-      console.log(offerings.current?.availablePackages);
       setCurrentOffering(offerings.current);
     };
 
     Purchases.setLogLevel(LOG_LEVEL.INFO);
 
     setup().catch(console.log);
-  }, []);
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
@@ -80,6 +87,18 @@ export default function ProfileScreen() {
 
       const screenCredits = parseInt(matches[1]);
       const revisionCredits = parseInt(matches[2]);
+
+      // Set user attributes including credit amounts before purchase
+      if (user?.id) {
+        await Purchases.setAttributes({
+          userId: user.id,
+          email: user.emailAddresses[0]?.emailAddress || "",
+          screenCredits: screenCredits.toString(),
+          revisionCredits: revisionCredits.toString(),
+          packageId: pkg.identifier,
+          bundleType: pkg.identifier, // "small", "medium", or "large"
+        });
+      }
 
       // Make the purchase
       const { customerInfo, productIdentifier } =
