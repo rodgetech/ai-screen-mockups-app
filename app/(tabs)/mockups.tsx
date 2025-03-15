@@ -3,7 +3,6 @@ import {
   Image,
   Platform,
   ActivityIndicator,
-  Pressable,
   ViewStyle,
   TextStyle,
   View,
@@ -20,6 +19,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { TouchableCard } from "@/components/ui/Card";
 
 interface MockupCardProps {
   mockup: Mockup;
@@ -30,6 +30,14 @@ function MockupCard({ mockup }: MockupCardProps) {
   const router = useRouter();
   const { getMockup } = useGetMockup();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Define theme-specific colors
+  const deviceBadgeBg =
+    colorScheme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)";
+  const deviceTextColor =
+    colorScheme === "dark" ? "rgba(255, 255, 255, 0.9)" : "rgba(0, 0, 0, 0.9)";
+  const dateTextColor =
+    colorScheme === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)";
 
   const handlePress = async () => {
     try {
@@ -59,47 +67,49 @@ function MockupCard({ mockup }: MockupCardProps) {
   };
 
   return (
-    <Pressable onPress={handlePress} disabled={isLoading}>
-      <ThemedView style={styles.card}>
-        <View style={styles.cardContent}>
-          <View style={styles.mainSection}>
-            <ThemedText style={styles.cardTitle}>
-              {mockup.screenTitle}
-            </ThemedText>
-            <View style={styles.deviceBadge}>
-              <ThemedText style={styles.deviceText}>
-                {mockup.deviceInfo.model}
-              </ThemedText>
-            </View>
-            <ThemedText style={styles.dateText}>
-              {formatDistanceToNow(new Date(mockup.timestamp), {
-                addSuffix: true,
-              })}
+    <TouchableCard
+      onPress={handlePress}
+      disabled={isLoading}
+      variant="elevated"
+    >
+      <View style={styles.cardContent}>
+        <View style={styles.mainSection}>
+          <ThemedText style={styles.cardTitle}>{mockup.screenTitle}</ThemedText>
+          <View
+            style={[styles.deviceBadge, { backgroundColor: deviceBadgeBg }]}
+          >
+            <ThemedText style={[styles.deviceText, { color: deviceTextColor }]}>
+              {mockup.deviceInfo.model}
             </ThemedText>
           </View>
-          {isLoading ? (
-            <ActivityIndicator
-              size="small"
-              color={
-                colorScheme === "light"
-                  ? "rgba(0, 0, 0, 0.5)"
-                  : "rgba(255, 255, 255, 0.5)"
-              }
-            />
-          ) : (
-            <Ionicons
-              name="chevron-forward"
-              size={24}
-              color={
-                colorScheme === "light"
-                  ? "rgba(0, 0, 0, 0.5)"
-                  : "rgba(255, 255, 255, 0.5)"
-              }
-            />
-          )}
+          <ThemedText style={[styles.dateText, { color: dateTextColor }]}>
+            {formatDistanceToNow(new Date(mockup.timestamp), {
+              addSuffix: true,
+            })}
+          </ThemedText>
         </View>
-      </ThemedView>
-    </Pressable>
+        {isLoading ? (
+          <ActivityIndicator
+            size="small"
+            color={
+              colorScheme === "light"
+                ? "rgba(0, 0, 0, 0.5)"
+                : "rgba(255, 255, 255, 0.5)"
+            }
+          />
+        ) : (
+          <Ionicons
+            name="chevron-forward"
+            size={24}
+            color={
+              colorScheme === "light"
+                ? "rgba(0, 0, 0, 0.5)"
+                : "rgba(255, 255, 255, 0.5)"
+            }
+          />
+        )}
+      </View>
+    </TouchableCard>
   );
 }
 
@@ -210,7 +220,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 10,
-    color: "#FFFFFF",
     lineHeight: 28,
   },
   subtitle: {
@@ -258,23 +267,11 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingBottom: Platform.OS === "ios" ? 20 : 16, // Extra padding for last item
   } as ViewStyle,
-  card: {
-    backgroundColor: "rgba(45, 45, 69, 0.75)",
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-  },
   cardContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    width: "100%",
   },
   mainSection: {
     flex: 1,
@@ -283,25 +280,22 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 24,
     fontWeight: "600",
-    color: "#FFFFFF",
     marginBottom: 12,
     lineHeight: 28,
   },
   deviceBadge: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
     alignSelf: "flex-start",
     marginBottom: 8,
+    overflow: "hidden",
   },
   deviceText: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.9)",
   },
   dateText: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.5)",
     fontStyle: "italic",
   },
 });

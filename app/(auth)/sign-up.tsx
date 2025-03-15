@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Image,
+  useColorScheme,
 } from "react-native";
 import { useSignUp, useSSO } from "@clerk/clerk-expo";
 import { Link, useRouter } from "expo-router";
@@ -32,6 +33,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function SignUpScreen() {
   useWarmUpBrowser();
+  const colorScheme = useColorScheme();
 
   const { startSSOFlow } = useSSO();
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -127,24 +129,58 @@ export default function SignUpScreen() {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.container}
+          style={[
+            styles.container,
+            { backgroundColor: colorScheme === "dark" ? "#1E1E1E" : "#FFFFFF" },
+          ]}
         >
           <ThemedView style={styles.content}>
             <Image
               source={require("@/assets/images/icon-transparent.png")}
               style={styles.icon}
             />
-            <ThemedText style={styles.title}>Verify Your Email</ThemedText>
-            <ThemedText style={styles.subtitle}>
+            <ThemedText
+              style={[
+                styles.title,
+                { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
+              ]}
+            >
+              Verify Your Email
+            </ThemedText>
+            <ThemedText
+              style={[
+                styles.subtitle,
+                { color: colorScheme === "dark" ? "#CCCCCC" : "#666666" },
+              ]}
+            >
               We've sent a verification code to your email
             </ThemedText>
 
-            <View style={styles.inputContainer}>
+            <View
+              style={[
+                styles.inputContainer,
+                {
+                  backgroundColor:
+                    colorScheme === "dark"
+                      ? "rgba(45, 45, 69, 0.75)"
+                      : "rgba(240, 240, 245, 0.75)",
+                  borderColor:
+                    colorScheme === "dark"
+                      ? "rgba(255, 255, 255, 0.1)"
+                      : "rgba(0, 0, 0, 0.1)",
+                },
+              ]}
+            >
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
+                ]}
                 value={code}
                 placeholder="Enter verification code"
-                placeholderTextColor="#999"
+                placeholderTextColor={
+                  colorScheme === "dark" ? "#999" : "#AAAAAA"
+                }
                 onChangeText={setCode}
                 keyboardType="number-pad"
                 autoComplete="off"
@@ -186,23 +222,55 @@ export default function SignUpScreen() {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === "dark" ? "#1E1E1E" : "#FFFFFF" },
+        ]}
       >
         <ThemedView style={styles.content}>
           <Image
             source={require("@/assets/images/icon-transparent.png")}
             style={styles.icon}
           />
-          <ThemedText style={styles.title}>Create Account</ThemedText>
-          <ThemedText style={styles.subtitle}>
-            Sign up to get started with Screen Mockups
+          <ThemedText
+            style={[
+              styles.title,
+              { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
+            ]}
+          >
+            Create Account
+          </ThemedText>
+          <ThemedText
+            style={[
+              styles.subtitle,
+              { color: colorScheme === "dark" ? "#CCCCCC" : "#666666" },
+            ]}
+          >
+            Sign up to get started with AI Screen Mockups
           </ThemedText>
 
-          <View style={styles.inputContainer}>
+          <View
+            style={[
+              styles.inputContainer,
+              {
+                backgroundColor:
+                  colorScheme === "dark"
+                    ? "rgba(45, 45, 69, 0.75)"
+                    : "rgba(240, 240, 245, 0.75)",
+                borderColor:
+                  colorScheme === "dark"
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "rgba(0, 0, 0, 0.1)",
+              },
+            ]}
+          >
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
+              ]}
               placeholder="Enter email"
-              placeholderTextColor="#999"
+              placeholderTextColor={colorScheme === "dark" ? "#999" : "#AAAAAA"}
               autoCapitalize="none"
               value={emailAddress}
               onChangeText={(text) => {
@@ -219,11 +287,28 @@ export default function SignUpScreen() {
             </ThemedText>
           )}
 
-          <View style={styles.inputContainer}>
+          <View
+            style={[
+              styles.inputContainer,
+              {
+                backgroundColor:
+                  colorScheme === "dark"
+                    ? "rgba(45, 45, 69, 0.75)"
+                    : "rgba(240, 240, 245, 0.75)",
+                borderColor:
+                  colorScheme === "dark"
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "rgba(0, 0, 0, 0.1)",
+              },
+            ]}
+          >
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
+              ]}
               placeholder="Enter password"
-              placeholderTextColor="#999"
+              placeholderTextColor={colorScheme === "dark" ? "#999" : "#AAAAAA"}
               secureTextEntry={true}
               value={password}
               onChangeText={(text) => {
@@ -282,7 +367,6 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1E1E1E",
   },
   content: {
     flex: 1,

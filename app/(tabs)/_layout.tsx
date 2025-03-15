@@ -27,13 +27,17 @@ export default function TabLayout() {
     return <Redirect href="/sign-in" />;
   }
 
-  // Ensure status bar is visible in tabs
+  // Ensure status bar is visible in tabs and set style based on theme
   useEffect(() => {
-    StatusBar.setBarStyle("light-content");
+    StatusBar.setBarStyle(
+      colorScheme === "dark" ? "light-content" : "dark-content"
+    );
     if (Platform.OS === "android") {
-      StatusBar.setBackgroundColor("#1E1E1E");
+      StatusBar.setBackgroundColor(
+        colorScheme === "dark" ? "#1E1E1E" : "#F2F0FF"
+      );
     }
-  }, []);
+  }, [colorScheme]);
 
   return (
     <Tabs

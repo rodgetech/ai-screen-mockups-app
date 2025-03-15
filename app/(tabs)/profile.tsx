@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
+import { Card, TouchableCard } from "@/components/ui/Card";
 import { Ionicons } from "@expo/vector-icons";
 import { useUserCredits } from "@/app/api/credits";
 import { useCreditsStore } from "@/app/stores/credits";
@@ -22,6 +23,7 @@ import Purchases, {
   LOG_LEVEL,
   PurchasesOffering,
 } from "react-native-purchases";
+import { useColorScheme } from "react-native";
 
 const APIKeys = {
   apple: "appl_oJECusJtJWeYQNeXBJObBLfEpqO",
@@ -34,9 +36,11 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { loadCredits } = useUserCredits();
   const { credits, isLoading, error, setCredits } = useCreditsStore();
+  const colorScheme = useColorScheme();
 
   const [currentOffering, setCurrentOffering] =
     useState<PurchasesOffering | null>(null);
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
   useEffect(() => {
     const setup = async () => {
@@ -134,18 +138,252 @@ export default function ProfileScreen() {
     total: number,
     icon: keyof typeof Ionicons.glyphMap
   ) => (
-    <View style={styles.creditCard}>
+    <Card style={styles.creditCard} variant="elevated">
       <View style={styles.creditIconContainer}>
-        <Ionicons name={icon} size={24} color="#FFFFFF" />
+        <Ionicons
+          name={icon}
+          size={24}
+          color={colorScheme === "dark" ? "#FFFFFF" : "#000000"}
+        />
       </View>
-      <ThemedText style={styles.creditTitle}>{title}</ThemedText>
-      <View style={styles.creditStats}>
-        <ThemedText style={styles.creditValue}>{total - used}</ThemedText>
-        <ThemedText style={styles.creditTotal}>/ {total}</ThemedText>
+      <View style={styles.creditDetails}>
+        <ThemedText style={styles.creditTitle}>{title}</ThemedText>
+        <ThemedText style={styles.creditCount}>
+          {used} / {total}
+        </ThemedText>
       </View>
-      <ThemedText style={styles.creditRemaining}>remaining</ThemedText>
-    </View>
+    </Card>
   );
+
+  const styles = StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colorScheme === "dark" ? "#1E1E2E" : "#fff",
+    },
+    container: {
+      flex: 1,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingBottom: 100,
+    },
+    content: {
+      padding: 20,
+    },
+    header: {
+      paddingTop: Platform.OS === "ios" ? 60 : 40,
+      paddingHorizontal: 20,
+      paddingBottom: 20,
+      backgroundColor: colorScheme === "dark" ? "#1E1E2E" : "#fff",
+      alignItems: "center",
+    },
+    avatarContainer: {
+      marginBottom: 16,
+      alignItems: "center",
+    },
+    avatar: {
+      width: 100,
+      height: 100,
+      borderRadius: 60,
+      alignSelf: "center",
+    },
+    avatarPlaceholder: {
+      backgroundColor: colorScheme === "dark" ? "#f0f0f0" : "#e0e0e0",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    userInfoContainer: {
+      alignItems: "center",
+      marginBottom: 16,
+      width: "100%",
+    },
+    name: {
+      fontSize: 24,
+      fontWeight: "bold",
+      color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
+      marginBottom: 4,
+      textAlign: "center",
+    },
+    email: {
+      fontSize: 16,
+      color: colorScheme === "dark" ? "#CCCCCC" : "#666666",
+      textAlign: "center",
+      marginBottom: 16,
+    },
+    sectionTitle: {
+      fontSize: 20,
+      fontWeight: "600",
+      marginBottom: 16,
+      color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
+    },
+    creditsContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 32,
+      gap: 16,
+    },
+    creditCard: {
+      alignItems: "center",
+      padding: 0,
+      flex: 1,
+    },
+    creditIconContainer: {
+      backgroundColor:
+        colorScheme === "dark"
+          ? "rgba(255, 255, 255, 0.1)"
+          : "rgba(0, 0, 0, 0.1)",
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 12,
+    },
+    creditDetails: {
+      flexDirection: "column",
+      alignItems: "center",
+    },
+    creditTitle: {
+      fontSize: 16,
+      fontWeight: "600",
+      marginBottom: 8,
+    },
+    creditCount: {
+      fontSize: 14,
+      color:
+        colorScheme === "dark"
+          ? "rgba(255, 255, 255, 0.6)"
+          : "rgba(0, 0, 0, 0.6)",
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 20,
+    },
+    errorText: {
+      fontSize: 16,
+      color: "#FF6B6B",
+      textAlign: "center",
+      marginBottom: 16,
+    },
+    retryLink: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 8,
+    },
+    retryText: {
+      fontSize: 16,
+      color: colorScheme === "dark" ? "#007AFF" : "#0066CC",
+      marginLeft: 6,
+      fontWeight: "500",
+    },
+    signOutButton: {
+      width: "100%",
+      marginTop: 8,
+    },
+    bundlesSection: {
+      marginTop: 24,
+    },
+    bundlesContainer: {
+      marginTop: 12,
+    },
+    bundleCard: {
+      padding: 0,
+      marginBottom: 12,
+    },
+    bundleIconContainer: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 12,
+    },
+    smallIconContainer: {
+      backgroundColor: "rgba(52, 199, 89, 0.2)",
+      borderWidth: 1,
+      borderColor: "rgba(52, 199, 89, 0.4)",
+    },
+    mediumIconContainer: {
+      backgroundColor: "rgba(90, 200, 250, 0.2)",
+      borderWidth: 1,
+      borderColor: "rgba(90, 200, 250, 0.4)",
+    },
+    largeIconContainer: {
+      backgroundColor: "rgba(175, 82, 222, 0.2)",
+      borderWidth: 1,
+      borderColor: "rgba(175, 82, 222, 0.4)",
+    },
+    smallTitle: {
+      color: "rgba(52, 199, 89, 1)",
+    },
+    mediumTitle: {
+      color: "rgba(90, 200, 250, 1)",
+    },
+    largeTitle: {
+      color: "rgba(175, 82, 222, 1)",
+    },
+    bundleTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      marginBottom: 8,
+    },
+    bundleDetails: {
+      marginTop: 4,
+    },
+    bundleText: {
+      fontSize: 16,
+      color:
+        colorScheme === "dark"
+          ? "rgba(255, 255, 255, 0.8)"
+          : "rgba(0, 0, 0, 0.8)",
+      marginBottom: 2,
+    },
+    priceContainer: {
+      marginTop: 12,
+      paddingTop: 12,
+      borderTopWidth: 1,
+      borderTopColor:
+        colorScheme === "dark"
+          ? "rgba(255, 255, 255, 0.1)"
+          : "rgba(0, 0, 0, 0.1)",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    priceText: {
+      fontSize: 18,
+      fontWeight: "bold",
+      color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
+    },
+    purchaseButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 8,
+    },
+    purchaseButtonText: {
+      color: "#FFFFFF",
+      fontWeight: "600",
+      fontSize: 14,
+    },
+    smallPurchaseButton: {
+      backgroundColor: "rgba(52, 199, 89, 1)",
+    },
+    mediumPurchaseButton: {
+      backgroundColor: "rgba(90, 200, 250, 1)",
+    },
+    largePurchaseButton: {
+      backgroundColor: "rgba(175, 82, 222, 1)",
+    },
+  });
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -161,18 +399,25 @@ export default function ProfileScreen() {
                 <Image source={{ uri: user.imageUrl }} style={styles.avatar} />
               ) : (
                 <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                  <Ionicons name="person" size={40} color="#666" />
+                  <Ionicons
+                    name="person"
+                    size={40}
+                    color={colorScheme === "dark" ? "#666" : "#999"}
+                  />
                 </View>
               )}
             </View>
-            <ThemedText style={styles.name}>
-              {user?.firstName
-                ? `${user.firstName} ${user.lastName || ""}`
-                : user?.emailAddresses[0]?.emailAddress}
-            </ThemedText>
-            <ThemedText style={styles.email}>
-              {user?.emailAddresses[0]?.emailAddress}
-            </ThemedText>
+
+            <View style={styles.userInfoContainer}>
+              <ThemedText style={styles.name}>
+                {user?.firstName
+                  ? `${user.firstName} ${user.lastName || ""}`
+                  : user?.emailAddresses[0]?.emailAddress}
+              </ThemedText>
+              <ThemedText style={styles.email}>
+                {user?.emailAddresses[0]?.emailAddress}
+              </ThemedText>
+            </View>
 
             <Button
               title="Sign Out"
@@ -188,7 +433,10 @@ export default function ProfileScreen() {
 
             {isLoading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#FFFFFF" />
+                <ActivityIndicator
+                  size="large"
+                  color={colorScheme === "dark" ? "#FFFFFF" : "#000000"}
+                />
               </View>
             ) : error ? (
               <View style={styles.errorContainer}>
@@ -200,7 +448,7 @@ export default function ProfileScreen() {
                     <Ionicons
                       name="refresh-outline"
                       size={18}
-                      color="#007AFF"
+                      color={colorScheme === "dark" ? "#007AFF" : "#0066CC"}
                     />
                     <ThemedText style={styles.retryText}>Retry</ThemedText>
                   </View>
@@ -231,10 +479,12 @@ export default function ProfileScreen() {
                     {currentOffering?.availablePackages
                       .sort((a, b) => a.product.price - b.product.price)
                       .map((pkg, index) => (
-                        <TouchableOpacity
+                        <TouchableCard
                           key={pkg.identifier}
                           style={styles.bundleCard}
+                          variant="elevated"
                           activeOpacity={0.8}
+                          onPress={() => handlePurchase(pkg)}
                         >
                           <View
                             style={[
@@ -255,7 +505,13 @@ export default function ProfileScreen() {
                                   : "rocket"
                               }
                               size={24}
-                              color="#FFFFFF"
+                              color={
+                                pkg.identifier === "large"
+                                  ? "rgba(175, 82, 222, 1)"
+                                  : pkg.identifier === "medium"
+                                  ? "rgba(90, 200, 250, 1)"
+                                  : "rgba(52, 199, 89, 1)"
+                              }
                             />
                           </View>
                           <ThemedText
@@ -295,7 +551,7 @@ export default function ProfileScreen() {
                               </ThemedText>
                             </TouchableOpacity>
                           </View>
-                        </TouchableOpacity>
+                        </TouchableCard>
                       ))}
                   </View>
                 </View>
@@ -307,241 +563,3 @@ export default function ProfileScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#1E1E2E",
-  },
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 100,
-  },
-  header: {
-    alignItems: "center",
-    paddingTop: Platform.OS === "ios" ? 20 : 40,
-    paddingBottom: 32,
-    paddingHorizontal: 20,
-  },
-  avatarContainer: {
-    marginBottom: 16,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  avatarPlaceholder: {
-    backgroundColor: "#f0f0f0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 4,
-  },
-  email: {
-    fontSize: 16,
-    color: "#CCCCCC",
-  },
-  content: {
-    paddingHorizontal: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    marginBottom: 16,
-    color: "#FFFFFF",
-  },
-  creditsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 32,
-    gap: 12,
-  },
-  creditCard: {
-    flex: 1,
-    backgroundColor: "rgba(45, 45, 69, 0.75)",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-    aspectRatio: 1,
-  },
-  creditIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  creditTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
-    marginBottom: 8,
-  },
-  creditStats: {
-    flexDirection: "row",
-    alignItems: "baseline",
-  },
-  creditValue: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  creditTotal: {
-    fontSize: 16,
-    color: "rgba(255, 255, 255, 0.6)",
-    marginLeft: 4,
-  },
-  creditRemaining: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.6)",
-    marginTop: 4,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 16,
-    color: "#FF6B6B",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  retryLink: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 8,
-  },
-  retryText: {
-    fontSize: 16,
-    color: "#007AFF",
-    marginLeft: 6,
-    fontWeight: "500",
-  },
-  signOutButton: {
-    width: "100%",
-    marginTop: 24,
-  },
-  bundlesSection: {
-    marginTop: 24,
-  },
-  bundlesContainer: {
-    marginTop: 12,
-  },
-  bundleCard: {
-    backgroundColor: "rgba(45, 45, 69, 0.75)",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    position: "relative",
-    overflow: "hidden",
-  },
-  bundleIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  smallIconContainer: {
-    backgroundColor: "rgba(52, 199, 89, 0.2)",
-    borderWidth: 1,
-    borderColor: "rgba(52, 199, 89, 0.4)",
-  },
-  mediumIconContainer: {
-    backgroundColor: "rgba(90, 200, 250, 0.2)",
-    borderWidth: 1,
-    borderColor: "rgba(90, 200, 250, 0.4)",
-  },
-  largeIconContainer: {
-    backgroundColor: "rgba(175, 82, 222, 0.2)",
-    borderWidth: 1,
-    borderColor: "rgba(175, 82, 222, 0.4)",
-  },
-  smallTitle: {
-    color: "rgba(52, 199, 89, 1)",
-  },
-  mediumTitle: {
-    color: "rgba(90, 200, 250, 1)",
-  },
-  largeTitle: {
-    color: "rgba(175, 82, 222, 1)",
-  },
-  bundleTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#FFFFFF",
-    marginBottom: 8,
-  },
-  bundleDetails: {
-    marginTop: 4,
-  },
-  bundleText: {
-    fontSize: 16,
-    color: "rgba(255, 255, 255, 0.8)",
-    marginBottom: 2,
-  },
-  priceContainer: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.1)",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  priceText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  purchaseButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  purchaseButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  smallPurchaseButton: {
-    backgroundColor: "rgba(52, 199, 89, 1)",
-  },
-  mediumPurchaseButton: {
-    backgroundColor: "rgba(90, 200, 250, 1)",
-  },
-  largePurchaseButton: {
-    backgroundColor: "rgba(175, 82, 222, 1)",
-  },
-});

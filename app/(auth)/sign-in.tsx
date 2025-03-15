@@ -8,6 +8,7 @@ import {
   View,
   Pressable,
   Image,
+  useColorScheme,
 } from "react-native";
 import React, { useCallback, useEffect } from "react";
 import { ThemedText } from "@/components/ThemedText";
@@ -33,6 +34,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function Page() {
   useWarmUpBrowser();
+  const colorScheme = useColorScheme();
 
   const { startSSOFlow } = useSSO();
 
@@ -113,23 +115,55 @@ export default function Page() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === "dark" ? "#1E1E1E" : "#FFFFFF" },
+      ]}
     >
       <ThemedView style={styles.content}>
         <Image
           source={require("@/assets/images/icon-transparent.png")}
           style={styles.icon}
         />
-        <ThemedText style={styles.title}>Welcome Back</ThemedText>
-        <ThemedText style={styles.subtitle}>
+        <ThemedText
+          style={[
+            styles.title,
+            { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
+          ]}
+        >
+          Welcome Back
+        </ThemedText>
+        <ThemedText
+          style={[
+            styles.subtitle,
+            { color: colorScheme === "dark" ? "#CCCCCC" : "#666666" },
+          ]}
+        >
           Sign in to your account to continue
         </ThemedText>
 
-        <ThemedView style={styles.inputContainer}>
+        <ThemedView
+          style={[
+            styles.inputContainer,
+            {
+              backgroundColor:
+                colorScheme === "dark"
+                  ? "rgba(45, 45, 69, 0.75)"
+                  : "rgba(240, 240, 245, 0.75)",
+              borderColor:
+                colorScheme === "dark"
+                  ? "rgba(255, 255, 255, 0.1)"
+                  : "rgba(0, 0, 0, 0.1)",
+            },
+          ]}
+        >
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
+            ]}
             placeholder="Enter email"
-            placeholderTextColor="#999"
+            placeholderTextColor={colorScheme === "dark" ? "#999" : "#AAAAAA"}
             autoCapitalize="none"
             value={emailAddress}
             onChangeText={(text) => {
@@ -144,11 +178,28 @@ export default function Page() {
           <ThemedText style={styles.errorText}>{errors.identifier}</ThemedText>
         )}
 
-        <ThemedView style={styles.inputContainer}>
+        <ThemedView
+          style={[
+            styles.inputContainer,
+            {
+              backgroundColor:
+                colorScheme === "dark"
+                  ? "rgba(45, 45, 69, 0.75)"
+                  : "rgba(240, 240, 245, 0.75)",
+              borderColor:
+                colorScheme === "dark"
+                  ? "rgba(255, 255, 255, 0.1)"
+                  : "rgba(0, 0, 0, 0.1)",
+            },
+          ]}
+        >
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
+            ]}
             placeholder="Enter password"
-            placeholderTextColor="#999"
+            placeholderTextColor={colorScheme === "dark" ? "#999" : "#AAAAAA"}
             secureTextEntry={true}
             value={password}
             onChangeText={(text) => {
@@ -208,7 +259,6 @@ export default function Page() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1E1E1E",
   },
   content: {
     flex: 1,
@@ -245,7 +295,6 @@ const styles = StyleSheet.create({
   },
   input: {
     fontSize: 17,
-    color: "#FFFFFF",
   },
   errorText: {
     color: "#ff3b30",

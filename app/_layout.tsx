@@ -63,11 +63,13 @@ function RootLayoutNav() {
             headerShown: false,
             animation: "fade",
             gestureEnabled: false,
-            contentStyle: { backgroundColor: "white" },
+            contentStyle: {
+              backgroundColor: colorScheme === "dark" ? "#1E1E2E" : "white",
+            },
           }}
         />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </ThemeProvider>
   );
 }

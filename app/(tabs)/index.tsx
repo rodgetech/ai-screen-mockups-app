@@ -23,7 +23,10 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useGenerateMockup } from "@/app/api/mockups";
 import { Button } from "@/components/ui/Button";
+import { Card, TouchableCard } from "@/components/ui/Card";
 import { useCreditsStore } from "@/app/stores/credits";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
 
 // Declare global variable for HTML content
 declare global {
@@ -93,22 +96,27 @@ export default function HomeScreen() {
   const [deviceInfo, setDeviceInfo] = useState(getDeviceInfo());
   const { generateMockup } = useGenerateMockup();
   const { credits, setCredits } = useCreditsStore();
+  const colorScheme = useColorScheme() ?? "light";
 
   // Update device info when component mounts
   useEffect(() => {
     setDeviceInfo(getDeviceInfo());
   }, []);
 
-  // Ensure status bar is visible
+  // Ensure status bar is visible and set correct style based on theme
   useEffect(() => {
     // Make sure status bar is visible on home screen
     RNStatusBar.setHidden(false);
-    RNStatusBar.setBarStyle("light-content");
+    RNStatusBar.setBarStyle(
+      colorScheme === "dark" ? "light-content" : "dark-content"
+    );
 
     if (Platform.OS === "android") {
-      RNStatusBar.setBackgroundColor("#1E1E1E");
+      RNStatusBar.setBackgroundColor(
+        colorScheme === "dark" ? "#1E1E1E" : "#F2F0FF"
+      );
     }
-  }, []);
+  }, [colorScheme]);
 
   const handleGenerate = async () => {
     // Dismiss keyboard when generating
@@ -195,17 +203,40 @@ export default function HomeScreen() {
     }
   };
 
+  // Get theme-specific colors
+  const iconColor =
+    colorScheme === "dark" ? "rgba(255, 255, 255, 0.9)" : "rgba(0, 0, 0, 0.7)";
+  const placeholderColor =
+    colorScheme === "dark" ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.4)";
+  const inputTextColor = colorScheme === "dark" ? "#FFFFFF" : "#000000";
+  const inputContainerBg =
+    colorScheme === "dark"
+      ? "rgba(45, 45, 69, 0.75)"
+      : "rgba(240, 240, 255, 0.75)";
+  const exampleButtonBg =
+    colorScheme === "dark"
+      ? "rgba(45, 45, 69, 0.75)"
+      : "rgba(240, 240, 255, 0.75)";
+  const borderColor =
+    colorScheme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)";
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
       >
-        <StatusBar style="light" />
+        <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
 
         <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          style={[
+            styles.scrollView,
+            { backgroundColor: Colors[colorScheme].background },
+          ]}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { backgroundColor: Colors[colorScheme].background },
+          ]}
           keyboardShouldPersistTaps="handled"
         >
           <ThemedView style={styles.content}>
@@ -215,11 +246,15 @@ export default function HomeScreen() {
               for you.
             </ThemedText>
 
-            <ThemedView style={styles.inputContainer}>
+            <Card
+              style={styles.inputContainer}
+              variant="elevated"
+              contentStyle={styles.inputCardContent}
+            >
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: inputTextColor }]}
                 placeholder="e.g., A login screen with email and password fields"
-                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                placeholderTextColor={placeholderColor}
                 value={prompt}
                 onChangeText={setPrompt}
                 multiline
@@ -229,29 +264,29 @@ export default function HomeScreen() {
                 blurOnSubmit={true}
                 onSubmitEditing={Keyboard.dismiss}
               />
-            </ThemedView>
+            </Card>
 
             <ThemedView style={styles.examplesContainer}>
               <ThemedText style={styles.examplesTitle}>
                 Try these examples:
               </ThemedText>
-              <TouchableOpacity
+              <TouchableCard
                 style={[styles.exampleButton, styles.exampleButtonFirst]}
+                variant="elevated"
+                contentStyle={styles.exampleButtonContent}
                 onPress={() => {
                   setPrompt("A login screen with email and password fields");
                   Keyboard.dismiss();
                 }}
               >
-                <Ionicons
-                  name="log-in-outline"
-                  size={22}
-                  color="rgba(255, 255, 255, 0.9)"
-                />
+                <Ionicons name="log-in-outline" size={22} color={iconColor} />
                 <ThemedText style={styles.exampleText}>Login Screen</ThemedText>
-              </TouchableOpacity>
+              </TouchableCard>
 
-              <TouchableOpacity
+              <TouchableCard
                 style={styles.exampleButton}
+                variant="elevated"
+                contentStyle={styles.exampleButtonContent}
                 onPress={() => {
                   setPrompt(
                     "A user profile screen with avatar, stats, and bio"
@@ -259,18 +294,16 @@ export default function HomeScreen() {
                   Keyboard.dismiss();
                 }}
               >
-                <Ionicons
-                  name="person-outline"
-                  size={22}
-                  color="rgba(255, 255, 255, 0.9)"
-                />
+                <Ionicons name="person-outline" size={22} color={iconColor} />
                 <ThemedText style={styles.exampleText}>
                   Profile Screen
                 </ThemedText>
-              </TouchableOpacity>
+              </TouchableCard>
 
-              <TouchableOpacity
+              <TouchableCard
                 style={[styles.exampleButton, styles.exampleButtonLast]}
+                variant="elevated"
+                contentStyle={styles.exampleButtonContent}
                 onPress={() => {
                   setPrompt("A dashboard with statistics and recent activity");
                   Keyboard.dismiss();
@@ -279,12 +312,12 @@ export default function HomeScreen() {
                 <Ionicons
                   name="stats-chart-outline"
                   size={22}
-                  color="rgba(255, 255, 255, 0.9)"
+                  color={iconColor}
                 />
                 <ThemedText style={styles.exampleText}>
                   Dashboard Screen
                 </ThemedText>
-              </TouchableOpacity>
+              </TouchableCard>
             </ThemedView>
 
             <Button
@@ -304,15 +337,12 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1E1E2E",
   },
   scrollView: {
     flex: 1,
-    backgroundColor: "#1E1E2E",
   },
   scrollContent: {
     flexGrow: 1,
-    backgroundColor: "#1E1E2E",
   },
   content: {
     flex: 1,
@@ -323,31 +353,21 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 10,
-    color: "#FFFFFF",
     lineHeight: 28,
   },
   subtitle: {
     fontSize: 17,
-    color: "#CCCCCC",
     marginBottom: 24,
     lineHeight: 24,
   },
   inputContainer: {
-    backgroundColor: "rgba(45, 45, 69, 0.75)",
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
     marginBottom: 32,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  inputCardContent: {
+    padding: 20,
   },
   input: {
     fontSize: 17,
-    color: "#FFFFFF",
     minHeight: 120,
     lineHeight: 24,
   },
@@ -358,22 +378,16 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 16,
-    color: "#FFFFFF",
   },
   exampleButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(45, 45, 69, 0.75)",
-    borderRadius: 14,
-    padding: 16,
     marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  exampleButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
   },
   exampleButtonFirst: {
     marginTop: 4,
@@ -385,7 +399,6 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 17,
     fontWeight: "600",
-    color: "#FFFFFF",
   },
   generateButton: {
     backgroundColor: "#007AFF",

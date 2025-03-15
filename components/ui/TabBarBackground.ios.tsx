@@ -2,13 +2,16 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { BlurView } from "expo-blur";
 import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function BlurTabBarBackground() {
+  const colorScheme = useColorScheme() ?? "light";
+
   return (
     <BlurView
-      // Using a custom tint that matches our lavender theme
-      tint="dark"
-      intensity={75}
+      // Using a tint that matches our theme based on color scheme
+      tint={colorScheme === "dark" ? "dark" : "light"}
+      intensity={colorScheme === "dark" ? 75 : 65}
       style={StyleSheet.absoluteFill}
     />
   );
