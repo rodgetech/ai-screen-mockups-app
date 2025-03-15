@@ -102,7 +102,13 @@ function RootLayout() {
   }
 
   return (
-    <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
+    <ClerkProvider
+      tokenCache={tokenCache}
+      publishableKey={publishableKey}
+      experimental={{
+        rethrowOfflineNetworkErrors: true,
+      }}
+    >
       <ClerkLoaded>
         <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
           <RootLayoutNav />

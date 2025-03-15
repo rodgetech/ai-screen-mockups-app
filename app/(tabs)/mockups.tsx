@@ -9,6 +9,7 @@ import {
   ScrollView,
   RefreshControl,
   StatusBar as RNStatusBar,
+  TouchableOpacity,
 } from "react-native";
 import React, { useEffect, useState, useCallback } from "react";
 import { useMockups, Mockup, useGetMockup } from "@/app/api/mockups";
@@ -66,6 +67,40 @@ function MockupCard({ mockup }: MockupCardProps) {
       setIsLoading(false);
     }
   };
+
+  const styles = StyleSheet.create({
+    cardContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      width: "100%",
+    },
+    mainSection: {
+      flex: 1,
+      marginRight: 16,
+    },
+    cardTitle: {
+      fontSize: 24,
+      fontWeight: "600",
+      marginBottom: 12,
+      lineHeight: 28,
+    },
+    deviceBadge: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 8,
+      alignSelf: "flex-start",
+      marginBottom: 8,
+      overflow: "hidden",
+    },
+    deviceText: {
+      fontSize: 14,
+    },
+    dateText: {
+      fontSize: 14,
+      fontStyle: "italic",
+    },
+  });
 
   return (
     <TouchableCard
@@ -142,7 +177,11 @@ export default function MockupsScreen() {
       const data = await fetchUserMockups();
       setMockups(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred. Please try again."
+      );
     } finally {
       setIsInitialLoading(false);
     }
@@ -158,6 +197,81 @@ export default function MockupsScreen() {
   useEffect(() => {
     loadMockups(true);
   }, [loadMockups]);
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    content: {
+      flex: 1,
+      padding: 20,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: "bold",
+      marginBottom: 10,
+      lineHeight: 28,
+    },
+    subtitle: {
+      fontSize: 16,
+      opacity: 0.7,
+    },
+    titleContainer: {
+      flexDirection: "column",
+      marginBottom: 20,
+      paddingTop: Platform.OS === "ios" ? 60 : 40,
+    } as ViewStyle,
+    scrollView: {
+      flex: 1,
+    } as ViewStyle,
+    scrollViewContent: {
+      paddingBottom: Platform.OS === "ios" ? 100 : 80, // Add padding for tab bar
+    } as ViewStyle,
+    loadingContainer: {
+      padding: 20,
+      alignItems: "center",
+    } as ViewStyle,
+    loadingText: {
+      marginTop: 10,
+      color: "#808080",
+    } as TextStyle,
+    errorContainer: {
+      padding: 20,
+      borderRadius: 8,
+      marginBottom: 20,
+      textAlign: "center",
+      justifyContent: "center",
+      alignItems: "center",
+    } as ViewStyle,
+    errorText: {
+      color: "#FF3B30",
+      textAlign: "center",
+    } as TextStyle,
+    emptyContainer: {
+      padding: 20,
+      alignItems: "center",
+    } as ViewStyle,
+    emptyText: {
+      color: "#808080",
+      textAlign: "center",
+    } as TextStyle,
+    mockupsList: {
+      gap: 12,
+      paddingBottom: Platform.OS === "ios" ? 20 : 16, // Extra padding for last item
+    } as ViewStyle,
+
+    retryLink: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 8,
+    },
+    retryText: {
+      fontSize: 16,
+      color: colorScheme === "dark" ? "#007AFF" : "#0066CC",
+      marginLeft: 6,
+      fontWeight: "500",
+    },
+  });
 
   return (
     <ThemedView style={styles.container}>
@@ -200,6 +314,16 @@ export default function MockupsScreen() {
           ) : error ? (
             <ThemedView style={styles.errorContainer}>
               <ThemedText style={styles.errorText}>{error}</ThemedText>
+              <TouchableOpacity onPress={() => loadMockups(true)}>
+                <View style={styles.retryLink}>
+                  <Ionicons
+                    name="refresh-outline"
+                    size={18}
+                    color={colorScheme === "dark" ? "#007AFF" : "#0066CC"}
+                  />
+                  <ThemedText style={styles.retryText}>Retry</ThemedText>
+                </View>
+              </TouchableOpacity>
             </ThemedView>
           ) : mockups.length === 0 ? (
             <ThemedView style={styles.emptyContainer}>
@@ -219,95 +343,3 @@ export default function MockupsScreen() {
     </ThemedView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 10,
-    lineHeight: 28,
-  },
-  subtitle: {
-    fontSize: 16,
-    opacity: 0.7,
-  },
-  titleContainer: {
-    flexDirection: "column",
-    marginBottom: 20,
-    paddingTop: Platform.OS === "ios" ? 60 : 40,
-  } as ViewStyle,
-  scrollView: {
-    flex: 1,
-  } as ViewStyle,
-  scrollViewContent: {
-    paddingBottom: Platform.OS === "ios" ? 100 : 80, // Add padding for tab bar
-  } as ViewStyle,
-  loadingContainer: {
-    padding: 20,
-    alignItems: "center",
-  } as ViewStyle,
-  loadingText: {
-    marginTop: 10,
-    color: "#808080",
-  } as TextStyle,
-  errorContainer: {
-    padding: 20,
-    backgroundColor: "#FFE5E5",
-    borderRadius: 8,
-    marginBottom: 20,
-  } as ViewStyle,
-  errorText: {
-    color: "#FF3B30",
-    textAlign: "center",
-  } as TextStyle,
-  emptyContainer: {
-    padding: 20,
-    alignItems: "center",
-  } as ViewStyle,
-  emptyText: {
-    color: "#808080",
-    textAlign: "center",
-  } as TextStyle,
-  mockupsList: {
-    gap: 12,
-    paddingBottom: Platform.OS === "ios" ? 20 : 16, // Extra padding for last item
-  } as ViewStyle,
-  cardContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  mainSection: {
-    flex: 1,
-    marginRight: 16,
-  },
-  cardTitle: {
-    fontSize: 24,
-    fontWeight: "600",
-    marginBottom: 12,
-    lineHeight: 28,
-  },
-  deviceBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    alignSelf: "flex-start",
-    marginBottom: 8,
-    overflow: "hidden",
-  },
-  deviceText: {
-    fontSize: 14,
-  },
-  dateText: {
-    fontSize: 14,
-    fontStyle: "italic",
-  },
-});

@@ -1,4 +1,4 @@
-import { useSignIn, useSSO } from "@clerk/clerk-expo";
+import { isClerkRuntimeError, useSignIn, useSSO } from "@clerk/clerk-expo";
 import { Link, useRouter } from "expo-router";
 import {
   StyleSheet,
@@ -59,11 +59,12 @@ export default function Page() {
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
         router.replace("/");
-      } else {
-        Sentry.captureException(signInAttempt);
       }
     } catch (err: any) {
-      if (err.errors) {
+      if (isClerkRuntimeError(err) && err.code === "network_error") {
+        setErrors({ general: "Network error. Please try again." });
+        Sentry.captureException(err);
+      } else if (err.errors) {
         const formErrors: { [key: string]: string } = {};
         err.errors.forEach((error: any) => {
           if (error.code === "form_identifier_not_found") {
@@ -106,7 +107,13 @@ export default function Page() {
         // to handle next steps
       }
     } catch (err) {
-      Sentry.captureException(err);
+      if (isClerkRuntimeError(err) && err.code === "network_error") {
+        setErrors({ general: "Network error. Please try again." });
+        Sentry.captureException(err);
+      } else {
+        Sentry.captureException(err);
+        setErrors({ general: "An error occurred. Please try again." });
+      }
     }
   }, []);
 
