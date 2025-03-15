@@ -529,12 +529,10 @@ export default function ProfileScreen() {
                     {currentOffering?.availablePackages
                       .sort((a, b) => a.product.price - b.product.price)
                       .map((pkg, index) => (
-                        <TouchableCard
+                        <Card
                           key={pkg.identifier}
                           style={styles.bundleCard}
                           variant="elevated"
-                          activeOpacity={0.8}
-                          onPress={() => handlePurchase(pkg)}
                         >
                           <View
                             style={[
@@ -601,7 +599,7 @@ export default function ProfileScreen() {
                               </ThemedText>
                             </TouchableOpacity>
                           </View>
-                        </TouchableCard>
+                        </Card>
                       ))}
                   </View>
                 </View>
