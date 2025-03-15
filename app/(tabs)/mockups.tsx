@@ -8,6 +8,7 @@ import {
   View,
   ScrollView,
   RefreshControl,
+  StatusBar as RNStatusBar,
 } from "react-native";
 import React, { useEffect, useState, useCallback } from "react";
 import { useMockups, Mockup, useGetMockup } from "@/app/api/mockups";
@@ -120,6 +121,17 @@ export default function MockupsScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const colorScheme = useColorScheme() ?? "light";
+
+  // Ensure status bar is visible
+  useEffect(() => {
+    RNStatusBar.setHidden(false);
+
+    if (Platform.OS === "android") {
+      RNStatusBar.setBackgroundColor(
+        colorScheme === "dark" ? "#1E1E1E" : "#F2F0FF"
+      );
+    }
+  }, [colorScheme]);
 
   const loadMockups = useCallback(async (showLoading = false) => {
     try {

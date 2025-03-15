@@ -107,9 +107,6 @@ export default function HomeScreen() {
   useEffect(() => {
     // Make sure status bar is visible on home screen
     RNStatusBar.setHidden(false);
-    RNStatusBar.setBarStyle(
-      colorScheme === "dark" ? "light-content" : "dark-content"
-    );
 
     if (Platform.OS === "android") {
       RNStatusBar.setBackgroundColor(
@@ -266,6 +263,14 @@ export default function HomeScreen() {
               />
             </Card>
 
+            <Button
+              title="Generate Mockup"
+              icon={{ name: "flash", size: 20 }}
+              onPress={handleGenerate}
+              disabled={!prompt.trim()}
+              isLoading={isGenerating}
+            />
+
             <ThemedView style={styles.examplesContainer}>
               <ThemedText style={styles.examplesTitle}>
                 Try these examples:
@@ -319,14 +324,6 @@ export default function HomeScreen() {
                 </ThemedText>
               </TouchableCard>
             </ThemedView>
-
-            <Button
-              title="Generate Mockup"
-              icon={{ name: "flash", size: 20 }}
-              onPress={handleGenerate}
-              disabled={!prompt.trim()}
-              isLoading={isGenerating}
-            />
           </ThemedView>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -372,7 +369,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   examplesContainer: {
-    marginBottom: 32,
+    marginVertical: 32,
   },
   examplesTitle: {
     fontSize: 20,

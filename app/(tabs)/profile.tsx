@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Alert,
   ScrollView,
+  StatusBar as RNStatusBar,
 } from "react-native";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
@@ -41,6 +42,17 @@ export default function ProfileScreen() {
   const [currentOffering, setCurrentOffering] =
     useState<PurchasesOffering | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
+
+  // Ensure status bar is visible
+  useEffect(() => {
+    RNStatusBar.setHidden(false);
+
+    if (Platform.OS === "android") {
+      RNStatusBar.setBackgroundColor(
+        colorScheme === "dark" ? "#1E1E1E" : "#F2F0FF"
+      );
+    }
+  }, [colorScheme]);
 
   useEffect(() => {
     const setup = async () => {
@@ -139,15 +151,35 @@ export default function ProfileScreen() {
     icon: keyof typeof Ionicons.glyphMap
   ) => (
     <Card style={styles.creditCard} variant="elevated">
-      <View style={styles.creditIconContainer}>
+      <View
+        style={[
+          styles.creditIconContainer,
+          title === "Screen Credits"
+            ? styles.screenCreditsIconContainer
+            : styles.revisionCreditsIconContainer,
+        ]}
+      >
         <Ionicons
           name={icon}
           size={24}
-          color={colorScheme === "dark" ? "#FFFFFF" : "#000000"}
+          color={
+            title === "Screen Credits"
+              ? "rgba(52, 199, 89, 1)"
+              : "rgba(90, 200, 250, 1)"
+          }
         />
       </View>
       <View style={styles.creditDetails}>
-        <ThemedText style={styles.creditTitle}>{title}</ThemedText>
+        <ThemedText
+          style={[
+            styles.creditTitle,
+            title === "Screen Credits"
+              ? styles.screenCreditsTitle
+              : styles.revisionCreditsTitle,
+          ]}
+        >
+          {title}
+        </ThemedText>
         <ThemedText style={styles.creditCount}>
           {used} / {total}
         </ThemedText>
@@ -221,29 +253,31 @@ export default function ProfileScreen() {
     creditsContainer: {
       flexDirection: "row",
       justifyContent: "space-between",
-      marginBottom: 32,
+      marginBottom: 4,
       gap: 16,
     },
     creditCard: {
       alignItems: "center",
-      padding: 0,
       flex: 1,
+      justifyContent: "center",
     },
     creditIconContainer: {
       backgroundColor:
         colorScheme === "dark"
           ? "rgba(255, 255, 255, 0.1)"
           : "rgba(0, 0, 0, 0.1)",
-      width: 48,
-      height: 48,
-      borderRadius: 24,
+      width: 64,
+      height: 64,
+      borderRadius: 32,
       alignItems: "center",
       justifyContent: "center",
-      marginBottom: 12,
+      marginBottom: 16,
+      alignSelf: "center",
     },
     creditDetails: {
       flexDirection: "column",
       alignItems: "center",
+      width: "100%",
     },
     creditTitle: {
       fontSize: 16,
@@ -382,6 +416,22 @@ export default function ProfileScreen() {
     },
     largePurchaseButton: {
       backgroundColor: "rgba(175, 82, 222, 1)",
+    },
+    screenCreditsIconContainer: {
+      backgroundColor: "rgba(52, 199, 89, 0.2)",
+      borderWidth: 1,
+      borderColor: "rgba(52, 199, 89, 0.4)",
+    },
+    revisionCreditsIconContainer: {
+      backgroundColor: "rgba(90, 200, 250, 0.2)",
+      borderWidth: 1,
+      borderColor: "rgba(90, 200, 250, 0.4)",
+    },
+    screenCreditsTitle: {
+      color: "rgba(52, 199, 89, 1)",
+    },
+    revisionCreditsTitle: {
+      color: "rgba(90, 200, 250, 1)",
     },
   });
 

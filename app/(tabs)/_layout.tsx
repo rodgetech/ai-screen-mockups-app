@@ -1,15 +1,14 @@
 import { Tabs } from "expo-router";
 import React, { useEffect } from "react";
-import { Platform, StatusBar } from "react-native";
+import { Platform, StatusBar, View } from "react-native";
 import { useAuth } from "@clerk/clerk-expo";
 import { Redirect } from "expo-router";
 import { useUserCredits } from "@/app/api/credits";
 
-import { HapticTab } from "@/components/HapticTab";
 import { IconSymbol } from "@/components/ui/IconSymbol";
-import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { FloatingTabBar } from "@/components/ui/FloatingTabBar";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -40,50 +39,45 @@ export default function TabLayout() {
   }, [colorScheme]);
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            backgroundColor: "transparent",
-            position: "absolute",
+    <View style={{ flex: 1 }}>
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+          headerShown: false,
+          tabBarStyle: {
+            display: "none",
           },
-          android: {
-            backgroundColor: colorScheme === "light" ? "#E6E6FA" : "#2D2D3A",
-          },
-        }),
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
-          ),
         }}
-      />
-      <Tabs.Screen
-        name="mockups"
-        options={{
-          title: "Mockups",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="lightbulb.max.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.fill" color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+        tabBar={(props) => <FloatingTabBar {...props} />}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: "Home",
+            tabBarIcon: ({ color, size }) => (
+              <IconSymbol size={size} name="house.fill" color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="mockups"
+          options={{
+            title: "Mockups",
+            tabBarIcon: ({ color, size }) => (
+              <IconSymbol size={size} name="lightbulb.max.fill" color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: "Profile",
+            tabBarIcon: ({ color, size }) => (
+              <IconSymbol size={size} name="person.fill" color={color} />
+            ),
+          }}
+        />
+      </Tabs>
+    </View>
   );
 }
