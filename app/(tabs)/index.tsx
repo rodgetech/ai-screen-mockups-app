@@ -13,6 +13,7 @@ import {
   Dimensions,
   PixelRatio,
   StatusBar as RNStatusBar,
+  View,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -255,43 +256,49 @@ export default function HomeScreen() {
                 value={prompt}
                 onChangeText={setPrompt}
                 multiline
-                numberOfLines={4}
+                numberOfLines={6}
                 textAlignVertical="top"
                 returnKeyType="done"
                 blurOnSubmit={true}
                 onSubmitEditing={Keyboard.dismiss}
               />
+
+              <View
+                style={[
+                  styles.generateButtonContainer,
+                  { borderTopColor: borderColor },
+                ]}
+              >
+                <Button
+                  title="Generate Mockup"
+                  icon={{ name: "flash", size: 20 }}
+                  onPress={handleGenerate}
+                  disabled={!prompt.trim()}
+                  isLoading={isGenerating}
+                />
+              </View>
             </Card>
 
-            <Button
-              title="Generate Mockup"
-              icon={{ name: "flash", size: 20 }}
-              onPress={handleGenerate}
-              disabled={!prompt.trim()}
-              isLoading={isGenerating}
-            />
-
-            <ThemedView style={styles.examplesContainer}>
-              <ThemedText style={styles.examplesTitle}>
-                Try these examples:
-              </ThemedText>
-              <TouchableCard
-                style={[styles.exampleButton, styles.exampleButtonFirst]}
-                variant="elevated"
-                contentStyle={styles.exampleButtonContent}
+            <ThemedView style={styles.examplesGrid}>
+              <TouchableOpacity
+                style={[
+                  styles.exampleButton,
+                  { backgroundColor: exampleButtonBg },
+                ]}
                 onPress={() => {
                   setPrompt("A login screen with email and password fields");
                   Keyboard.dismiss();
                 }}
               >
-                <Ionicons name="log-in-outline" size={22} color={iconColor} />
-                <ThemedText style={styles.exampleText}>Login Screen</ThemedText>
-              </TouchableCard>
+                <Ionicons name="log-in-outline" size={24} color={iconColor} />
+                <ThemedText style={styles.exampleButtonText}>Login</ThemedText>
+              </TouchableOpacity>
 
-              <TouchableCard
-                style={styles.exampleButton}
-                variant="elevated"
-                contentStyle={styles.exampleButtonContent}
+              <TouchableOpacity
+                style={[
+                  styles.exampleButton,
+                  { backgroundColor: exampleButtonBg },
+                ]}
                 onPress={() => {
                   setPrompt(
                     "A user profile screen with avatar, stats, and bio"
@@ -299,16 +306,17 @@ export default function HomeScreen() {
                   Keyboard.dismiss();
                 }}
               >
-                <Ionicons name="person-outline" size={22} color={iconColor} />
-                <ThemedText style={styles.exampleText}>
-                  Profile Screen
+                <Ionicons name="person-outline" size={24} color={iconColor} />
+                <ThemedText style={styles.exampleButtonText}>
+                  Profile
                 </ThemedText>
-              </TouchableCard>
+              </TouchableOpacity>
 
-              <TouchableCard
-                style={[styles.exampleButton, styles.exampleButtonLast]}
-                variant="elevated"
-                contentStyle={styles.exampleButtonContent}
+              <TouchableOpacity
+                style={[
+                  styles.exampleButton,
+                  { backgroundColor: exampleButtonBg },
+                ]}
                 onPress={() => {
                   setPrompt("A dashboard with statistics and recent activity");
                   Keyboard.dismiss();
@@ -316,13 +324,31 @@ export default function HomeScreen() {
               >
                 <Ionicons
                   name="stats-chart-outline"
-                  size={22}
+                  size={24}
                   color={iconColor}
                 />
-                <ThemedText style={styles.exampleText}>
-                  Dashboard Screen
+                <ThemedText style={styles.exampleButtonText}>
+                  Dashboard
                 </ThemedText>
-              </TouchableCard>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.exampleButton,
+                  { backgroundColor: exampleButtonBg },
+                ]}
+                onPress={() => {
+                  setPrompt(
+                    "A settings screen with dark mode toggle and notification preferences"
+                  );
+                  Keyboard.dismiss();
+                }}
+              >
+                <Ionicons name="settings-outline" size={24} color={iconColor} />
+                <ThemedText style={styles.exampleButtonText}>
+                  Settings
+                </ThemedText>
+              </TouchableOpacity>
             </ThemedView>
           </ThemedView>
         </ScrollView>
@@ -358,67 +384,48 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   inputContainer: {
-    marginBottom: 32,
+    marginBottom: 24,
+    minHeight: 250,
   },
   inputCardContent: {
     padding: 20,
+    paddingBottom: 0,
   },
   input: {
     fontSize: 17,
-    minHeight: 120,
+    minHeight: 150,
     lineHeight: 24,
-  },
-  examplesContainer: {
-    marginVertical: 32,
-  },
-  examplesTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
+    textAlignVertical: "top",
     marginBottom: 16,
   },
+  generateButtonContainer: {
+    borderTopWidth: 1,
+    paddingTop: 16,
+    paddingBottom: 16,
+  },
+  examplesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
   exampleButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  exampleButtonContent: {
-    flexDirection: "row",
-    alignItems: "center",
+    width: "48%",
+    borderRadius: 16,
     padding: 16,
-  },
-  exampleButtonFirst: {
-    marginTop: 4,
-  },
-  exampleButtonLast: {
-    marginBottom: 0,
-  },
-  exampleText: {
-    marginLeft: 12,
-    fontSize: 17,
-    fontWeight: "600",
-  },
-  generateButton: {
-    backgroundColor: "#007AFF",
-    borderRadius: 12,
-    padding: 18,
+    marginBottom: 16,
     alignItems: "center",
     justifyContent: "center",
-    flexDirection: "row",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 2,
   },
-  generateButtonDisabled: {
-    backgroundColor: "#6e6e6e",
-  },
-  generateButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  buttonIcon: {
-    marginRight: 10,
+  exampleButtonText: {
+    marginTop: 8,
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
   },
 });

@@ -139,43 +139,57 @@ export default function CreditsScreen() {
     used: number,
     total: number,
     icon: keyof typeof Ionicons.glyphMap
-  ) => (
-    <View style={styles.creditItem}>
-      <View
-        style={[
-          styles.creditIconContainer,
-          title === "Screen Credits"
-            ? styles.screenCreditsIconContainer
-            : styles.revisionCreditsIconContainer,
-        ]}
-      >
-        <Ionicons
-          name={icon}
-          size={24}
-          color={
-            title === "Screen Credits"
-              ? "rgba(52, 199, 89, 1)"
-              : "rgba(90, 200, 250, 1)"
-          }
-        />
-      </View>
-      <View style={styles.creditDetails}>
-        <ThemedText
+  ) => {
+    const remaining = total - used;
+    const isDepletedCredits = remaining === 0;
+
+    return (
+      <View style={styles.creditItem}>
+        <View
           style={[
-            styles.creditTitle,
+            styles.creditIconContainer,
             title === "Screen Credits"
-              ? styles.screenCreditsTitle
-              : styles.revisionCreditsTitle,
+              ? styles.screenCreditsIconContainer
+              : styles.revisionCreditsIconContainer,
+            isDepletedCredits && styles.depletedCreditsIconContainer,
           ]}
         >
-          {title}
-        </ThemedText>
-        <ThemedText style={styles.creditCount}>
-          {used} / {total}
-        </ThemedText>
+          <Ionicons
+            name={icon}
+            size={24}
+            color={
+              isDepletedCredits
+                ? "rgba(255, 59, 48, 1)"
+                : title === "Screen Credits"
+                ? "rgba(52, 199, 89, 1)"
+                : "rgba(90, 200, 250, 1)"
+            }
+          />
+        </View>
+        <View style={styles.creditDetails}>
+          <ThemedText
+            style={[
+              styles.creditTitle,
+              title === "Screen Credits"
+                ? styles.screenCreditsTitle
+                : styles.revisionCreditsTitle,
+              isDepletedCredits && styles.depletedCreditsTitle,
+            ]}
+          >
+            {title}
+          </ThemedText>
+          <ThemedText
+            style={[
+              styles.creditCount,
+              isDepletedCredits && styles.depletedCreditsCount,
+            ]}
+          >
+            {used} / {total}
+          </ThemedText>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const styles = StyleSheet.create({
     safeArea: {
@@ -414,6 +428,17 @@ export default function CreditsScreen() {
       fontSize: 16,
       color: colorScheme === "dark" ? "#808080" : "#A0A0A0",
       paddingTop: 10,
+    },
+    depletedCreditsIconContainer: {
+      backgroundColor: "rgba(255, 59, 48, 0.2)",
+      borderWidth: 1,
+      borderColor: "rgba(255, 59, 48, 0.4)",
+    },
+    depletedCreditsTitle: {
+      color: "rgba(255, 59, 48, 1)",
+    },
+    depletedCreditsCount: {
+      color: "rgba(255, 59, 48, 0.8)",
     },
   });
 
