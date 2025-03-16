@@ -11,7 +11,6 @@ import {
   StatusBar as RNStatusBar,
 } from "react-native";
 import { useUser } from "@clerk/clerk-expo";
-import { useRouter } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Card } from "@/components/ui/Card";
