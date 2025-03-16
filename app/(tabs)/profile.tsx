@@ -2,46 +2,29 @@ import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
-  TouchableOpacity,
   Platform,
   Image,
-  ActivityIndicator,
   SafeAreaView,
-  Alert,
   ScrollView,
   StatusBar as RNStatusBar,
+  Alert,
+  Linking,
+  TouchableOpacity,
 } from "react-native";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
-import { Card, TouchableCard } from "@/components/ui/Card";
 import { Ionicons } from "@expo/vector-icons";
-import { useUserCredits } from "@/app/api/credits";
-import { useCreditsStore } from "@/app/stores/credits";
-import Purchases, {
-  LOG_LEVEL,
-  PurchasesOffering,
-} from "react-native-purchases";
 import { useColorScheme } from "react-native";
-
-const APIKeys = {
-  apple: "appl_oJECusJtJWeYQNeXBJObBLfEpqO",
-  google: "test",
-};
 
 export default function ProfileScreen() {
   const { signOut } = useAuth();
   const { user } = useUser();
   const router = useRouter();
-  const { loadCredits } = useUserCredits();
-  const { credits, isLoading, error, setCredits } = useCreditsStore();
   const colorScheme = useColorScheme();
-
-  const [currentOffering, setCurrentOffering] =
-    useState<PurchasesOffering | null>(null);
-  const [isPurchasing, setIsPurchasing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Ensure status bar is visible
   useEffect(() => {
@@ -54,31 +37,6 @@ export default function ProfileScreen() {
     }
   }, [colorScheme]);
 
-  useEffect(() => {
-    const setup = async () => {
-      if (Platform.OS == "android") {
-        await Purchases.configure({ apiKey: APIKeys.google });
-      } else {
-        await Purchases.configure({ apiKey: APIKeys.apple });
-      }
-
-      // Set user attributes for webhook metadata
-      if (user?.id) {
-        await Purchases.setAttributes({
-          userId: user.id,
-          email: user.emailAddresses[0]?.emailAddress || "",
-        });
-      }
-
-      const offerings = await Purchases.getOfferings();
-      setCurrentOffering(offerings.current);
-    };
-
-    Purchases.setLogLevel(LOG_LEVEL.INFO);
-
-    setup().catch(console.log);
-  }, [user]);
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -88,104 +46,58 @@ export default function ProfileScreen() {
     }
   };
 
-  const handlePurchase = async (pkg: any) => {
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to delete your account? This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: confirmDeleteAccount,
+        },
+      ]
+    );
+  };
+
+  const confirmDeleteAccount = async () => {
     try {
-      // Parse credits from description (e.g., "5 screens, 5 revisions")
-      const description = pkg.product.description;
-      const matches = description.match(
-        /(\d+)\s+screens?,\s+(\d+)\s+revisions?/i
-      );
+      setIsDeleting(true);
 
-      if (!matches) {
-        console.error("Could not parse credits from description:", description);
-        return;
+      // Delete the user account using Clerk's API
+      if (user) {
+        await user.delete();
+        // After successful deletion, sign out and redirect to sign-in
+        router.replace("/sign-in");
+      } else {
+        throw new Error("User not found");
       }
-
-      const screenCredits = parseInt(matches[1]);
-      const revisionCredits = parseInt(matches[2]);
-
-      // Set user attributes including credit amounts before purchase
-      if (user?.id) {
-        await Purchases.setAttributes({
-          userId: user.id,
-          email: user.emailAddresses[0]?.emailAddress || "",
-          screenCredits: screenCredits.toString(),
-          revisionCredits: revisionCredits.toString(),
-          packageId: pkg.identifier,
-          bundleType: pkg.identifier, // "small", "medium", or "large"
-        });
-      }
-
-      // Make the purchase
-      const { customerInfo, productIdentifier } =
-        await Purchases.purchasePackage(pkg);
-
-      // Optimistically update credits
-      if (credits) {
-        setCredits({
-          ...credits,
-          screenCredits: credits.screenCredits + screenCredits,
-          remainingScreenCredits:
-            credits.remainingScreenCredits + screenCredits,
-          revisionCredits: credits.revisionCredits + revisionCredits,
-          remainingRevisionCredits:
-            credits.remainingRevisionCredits + revisionCredits,
-        });
-      }
-    } catch (e: any) {
-      if (e.code === Purchases.PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
-        // User cancelled - no need for error message
-        return;
-      }
+    } catch (err) {
+      console.error("Error deleting account:", err);
       Alert.alert(
-        "Error purchasing package",
-        "There was a problem with your purchase. Please try again."
+        "Error",
+        "There was a problem deleting your account. Please try again later."
       );
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  const renderCreditCard = (
-    title: string,
-    used: number,
-    total: number,
-    icon: keyof typeof Ionicons.glyphMap
-  ) => (
-    <Card style={styles.creditCard} variant="elevated">
-      <View
-        style={[
-          styles.creditIconContainer,
-          title === "Screen Credits"
-            ? styles.screenCreditsIconContainer
-            : styles.revisionCreditsIconContainer,
-        ]}
-      >
-        <Ionicons
-          name={icon}
-          size={24}
-          color={
-            title === "Screen Credits"
-              ? "rgba(52, 199, 89, 1)"
-              : "rgba(90, 200, 250, 1)"
-          }
-        />
-      </View>
-      <View style={styles.creditDetails}>
-        <ThemedText
-          style={[
-            styles.creditTitle,
-            title === "Screen Credits"
-              ? styles.screenCreditsTitle
-              : styles.revisionCreditsTitle,
-          ]}
-        >
-          {title}
-        </ThemedText>
-        <ThemedText style={styles.creditCount}>
-          {used} / {total}
-        </ThemedText>
-      </View>
-    </Card>
-  );
+  const handleSupportPress = () => {
+    Linking.openURL("mailto:rodgetech@gmail.com");
+  };
+
+  const handlePrivacyPress = () => {
+    Linking.openURL("https://screenmockups.app/privacy");
+  };
+
+  const handleTermsPress = () => {
+    Linking.openURL("https://screenmockups.app/terms");
+  };
 
   const styles = StyleSheet.create({
     safeArea: {
@@ -244,194 +156,78 @@ export default function ProfileScreen() {
       textAlign: "center",
       marginBottom: 16,
     },
-    sectionTitle: {
-      fontSize: 20,
-      fontWeight: "600",
-      marginBottom: 16,
-      color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
-    },
-    creditsContainer: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      marginBottom: 4,
-      gap: 16,
-    },
-    creditCard: {
-      alignItems: "center",
-      flex: 1,
-      justifyContent: "center",
-    },
-    creditIconContainer: {
-      backgroundColor:
-        colorScheme === "dark"
-          ? "rgba(255, 255, 255, 0.1)"
-          : "rgba(0, 0, 0, 0.1)",
-      width: 64,
-      height: 64,
-      borderRadius: 32,
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: 16,
-      alignSelf: "center",
-    },
-    creditDetails: {
-      flexDirection: "column",
-      alignItems: "center",
-      width: "100%",
-    },
-    creditTitle: {
-      fontSize: 16,
-      fontWeight: "600",
-      marginBottom: 8,
-    },
-    creditCount: {
-      fontSize: 14,
-      color:
-        colorScheme === "dark"
-          ? "rgba(255, 255, 255, 0.6)"
-          : "rgba(0, 0, 0, 0.6)",
-    },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    errorContainer: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      padding: 20,
-    },
-    errorText: {
-      fontSize: 16,
-      color: "#FF6B6B",
-      textAlign: "center",
-      marginBottom: 16,
-    },
-    retryLink: {
-      flexDirection: "row",
-      alignItems: "center",
-      padding: 8,
-    },
-    retryText: {
-      fontSize: 16,
-      color: colorScheme === "dark" ? "#007AFF" : "#0066CC",
-      marginLeft: 6,
-      fontWeight: "500",
-    },
     signOutButton: {
       width: "100%",
       marginTop: 8,
     },
-    bundlesSection: {
-      marginTop: 24,
-    },
-    bundlesContainer: {
-      marginTop: 12,
-    },
-    bundleCard: {
-      padding: 0,
-      marginBottom: 12,
-    },
-    bundleIconContainer: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      justifyContent: "center",
-      alignItems: "center",
-      marginBottom: 12,
-    },
-    smallIconContainer: {
-      backgroundColor: "rgba(52, 199, 89, 0.2)",
+    dangerZone: {
+      marginTop: 40,
+      padding: 20,
+      borderRadius: 12,
+      backgroundColor:
+        colorScheme === "dark"
+          ? "rgba(255, 59, 48, 0.1)"
+          : "rgba(255, 59, 48, 0.05)",
       borderWidth: 1,
-      borderColor: "rgba(52, 199, 89, 0.4)",
+      borderColor:
+        colorScheme === "dark"
+          ? "rgba(255, 59, 48, 0.3)"
+          : "rgba(255, 59, 48, 0.2)",
     },
-    mediumIconContainer: {
-      backgroundColor: "rgba(90, 200, 250, 0.2)",
-      borderWidth: 1,
-      borderColor: "rgba(90, 200, 250, 0.4)",
-    },
-    largeIconContainer: {
-      backgroundColor: "rgba(175, 82, 222, 0.2)",
-      borderWidth: 1,
-      borderColor: "rgba(175, 82, 222, 0.4)",
-    },
-    smallTitle: {
-      color: "rgba(52, 199, 89, 1)",
-    },
-    mediumTitle: {
-      color: "rgba(90, 200, 250, 1)",
-    },
-    largeTitle: {
-      color: "rgba(175, 82, 222, 1)",
-    },
-    bundleTitle: {
+    dangerZoneTitle: {
       fontSize: 18,
       fontWeight: "600",
-      marginBottom: 8,
+      color: "rgba(255, 59, 48, 1)",
+      marginBottom: 12,
     },
-    bundleDetails: {
-      marginTop: 4,
-    },
-    bundleText: {
-      fontSize: 16,
+    dangerZoneText: {
+      fontSize: 14,
       color:
         colorScheme === "dark"
           ? "rgba(255, 255, 255, 0.8)"
           : "rgba(0, 0, 0, 0.8)",
-      marginBottom: 2,
+      marginBottom: 16,
     },
-    priceContainer: {
-      marginTop: 12,
-      paddingTop: 12,
-      borderTopWidth: 1,
-      borderTopColor:
+    deleteButton: {
+      backgroundColor: "rgba(255, 59, 48, 1)",
+    },
+    deleteButtonDisabled: {
+      backgroundColor: "rgba(255, 59, 48, 0.5)",
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      marginBottom: 16,
+      color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
+    },
+    sectionContainer: {
+      marginBottom: 24,
+    },
+    linkItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor:
         colorScheme === "dark"
           ? "rgba(255, 255, 255, 0.1)"
           : "rgba(0, 0, 0, 0.1)",
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
     },
-    priceText: {
-      fontSize: 18,
-      fontWeight: "bold",
+    linkText: {
+      fontSize: 16,
+      marginLeft: 12,
       color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
     },
-    purchaseButton: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 8,
-    },
-    purchaseButtonText: {
-      color: "#FFFFFF",
-      fontWeight: "600",
-      fontSize: 14,
-    },
-    smallPurchaseButton: {
-      backgroundColor: "rgba(52, 199, 89, 1)",
-    },
-    mediumPurchaseButton: {
-      backgroundColor: "rgba(90, 200, 250, 1)",
-    },
-    largePurchaseButton: {
-      backgroundColor: "rgba(175, 82, 222, 1)",
-    },
-    screenCreditsIconContainer: {
-      backgroundColor: "rgba(52, 199, 89, 0.2)",
-      borderWidth: 1,
-      borderColor: "rgba(52, 199, 89, 0.4)",
-    },
-    revisionCreditsIconContainer: {
-      backgroundColor: "rgba(90, 200, 250, 0.2)",
-      borderWidth: 1,
-      borderColor: "rgba(90, 200, 250, 0.4)",
-    },
-    screenCreditsTitle: {
-      color: "rgba(52, 199, 89, 1)",
-    },
-    revisionCreditsTitle: {
-      color: "rgba(90, 200, 250, 1)",
+    iconContainer: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor:
+        colorScheme === "dark"
+          ? "rgba(255, 255, 255, 0.1)"
+          : "rgba(0, 0, 0, 0.05)",
     },
   });
 
@@ -479,132 +275,80 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.content}>
-            <ThemedText style={styles.sectionTitle}>Your Credits</ThemedText>
+            {/* Support Section */}
+            <View style={styles.sectionContainer}>
+              <ThemedText style={styles.sectionTitle}>Support</ThemedText>
 
-            {isLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator
-                  size="large"
-                  color={colorScheme === "dark" ? "#FFFFFF" : "#000000"}
-                />
-              </View>
-            ) : error ? (
-              <View style={styles.errorContainer}>
-                <ThemedText style={styles.errorText}>
-                  Failed to load credits. Please try again.
+              <TouchableOpacity
+                style={styles.linkItem}
+                onPress={handleSupportPress}
+              >
+                <View style={styles.iconContainer}>
+                  <Ionicons
+                    name="mail-outline"
+                    size={18}
+                    color={colorScheme === "dark" ? "#FFFFFF" : "#000000"}
+                  />
+                </View>
+                <ThemedText style={styles.linkText}>Contact Support</ThemedText>
+              </TouchableOpacity>
+            </View>
+
+            {/* Legal Section */}
+            <View style={styles.sectionContainer}>
+              <ThemedText style={styles.sectionTitle}>Legal</ThemedText>
+
+              <TouchableOpacity
+                style={styles.linkItem}
+                onPress={handlePrivacyPress}
+              >
+                <View style={styles.iconContainer}>
+                  <Ionicons
+                    name="shield-outline"
+                    size={18}
+                    color={colorScheme === "dark" ? "#FFFFFF" : "#000000"}
+                  />
+                </View>
+                <ThemedText style={styles.linkText}>Privacy Policy</ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.linkItem}
+                onPress={handleTermsPress}
+              >
+                <View style={styles.iconContainer}>
+                  <Ionicons
+                    name="document-text-outline"
+                    size={18}
+                    color={colorScheme === "dark" ? "#FFFFFF" : "#000000"}
+                  />
+                </View>
+                <ThemedText style={styles.linkText}>
+                  Terms of Service
                 </ThemedText>
-                <TouchableOpacity onPress={() => loadCredits(true)}>
-                  <View style={styles.retryLink}>
-                    <Ionicons
-                      name="refresh-outline"
-                      size={18}
-                      color={colorScheme === "dark" ? "#007AFF" : "#0066CC"}
-                    />
-                    <ThemedText style={styles.retryText}>Retry</ThemedText>
-                  </View>
-                </TouchableOpacity>
-              </View>
-            ) : credits ? (
-              <View>
-                <View style={styles.creditsContainer}>
-                  {renderCreditCard(
-                    "Screen Credits",
-                    credits.screenCredits - credits.remainingScreenCredits,
-                    credits.screenCredits,
-                    "phone-portrait"
-                  )}
-                  {renderCreditCard(
-                    "Revision Credits",
-                    credits.revisionCredits - credits.remainingRevisionCredits,
-                    credits.revisionCredits,
-                    "git-branch"
-                  )}
-                </View>
+              </TouchableOpacity>
+            </View>
 
-                <View style={styles.bundlesSection}>
-                  <ThemedText style={styles.sectionTitle}>
-                    Credit Bundles
-                  </ThemedText>
-                  <View style={styles.bundlesContainer}>
-                    {currentOffering?.availablePackages
-                      .sort((a, b) => a.product.price - b.product.price)
-                      .map((pkg, index) => (
-                        <Card
-                          key={pkg.identifier}
-                          style={styles.bundleCard}
-                          variant="elevated"
-                        >
-                          <View
-                            style={[
-                              styles.bundleIconContainer,
-                              pkg.identifier === "large"
-                                ? styles.largeIconContainer
-                                : pkg.identifier === "medium"
-                                ? styles.mediumIconContainer
-                                : styles.smallIconContainer,
-                            ]}
-                          >
-                            <Ionicons
-                              name={
-                                pkg.identifier === "large"
-                                  ? "diamond"
-                                  : pkg.identifier === "medium"
-                                  ? "star"
-                                  : "rocket"
-                              }
-                              size={24}
-                              color={
-                                pkg.identifier === "large"
-                                  ? "rgba(175, 82, 222, 1)"
-                                  : pkg.identifier === "medium"
-                                  ? "rgba(90, 200, 250, 1)"
-                                  : "rgba(52, 199, 89, 1)"
-                              }
-                            />
-                          </View>
-                          <ThemedText
-                            style={[
-                              styles.bundleTitle,
-                              pkg.identifier === "large"
-                                ? styles.largeTitle
-                                : pkg.identifier === "medium"
-                                ? styles.mediumTitle
-                                : styles.smallTitle,
-                            ]}
-                          >
-                            {pkg.product.title}
-                          </ThemedText>
-                          <View style={styles.bundleDetails}>
-                            <ThemedText style={styles.bundleText}>
-                              {pkg.product.description}
-                            </ThemedText>
-                          </View>
-                          <View style={styles.priceContainer}>
-                            <ThemedText style={styles.priceText}>
-                              {pkg.product.priceString}
-                            </ThemedText>
-                            <TouchableOpacity
-                              style={[
-                                styles.purchaseButton,
-                                pkg.identifier === "large"
-                                  ? styles.largePurchaseButton
-                                  : pkg.identifier === "medium"
-                                  ? styles.mediumPurchaseButton
-                                  : styles.smallPurchaseButton,
-                              ]}
-                              onPress={() => handlePurchase(pkg)}
-                            >
-                              <ThemedText style={styles.purchaseButtonText}>
-                                Purchase
-                              </ThemedText>
-                            </TouchableOpacity>
-                          </View>
-                        </Card>
-                      ))}
-                  </View>
-                </View>
-              </View>
-            ) : null}
+            <View style={styles.dangerZone}>
+              <ThemedText style={styles.dangerZoneTitle}>
+                Danger Zone
+              </ThemedText>
+              <ThemedText style={styles.dangerZoneText}>
+                Unhappy with our app? You can permanently delete your account
+                and all associated data.
+              </ThemedText>
+              <Button
+                title={isDeleting ? "Deleting..." : "Delete Account"}
+                onPress={handleDeleteAccount}
+                disabled={isDeleting}
+                icon={{ name: "trash-outline" }}
+                variant="primary"
+                style={[
+                  styles.deleteButton,
+                  isDeleting && styles.deleteButtonDisabled,
+                ]}
+              />
+            </View>
           </View>
         </ScrollView>
       </ThemedView>

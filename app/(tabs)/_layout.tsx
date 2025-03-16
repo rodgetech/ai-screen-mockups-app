@@ -69,6 +69,19 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
+          name="credits"
+          options={{
+            title: "Credits",
+            tabBarIcon: ({ color, size }) => (
+              <IconSymbol
+                size={size}
+                name="dollarsign.circle.fill"
+                color={color}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="profile"
           options={{
             title: "Profile",
