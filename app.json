@@ -51,8 +51,7 @@
         "expo-media-library",
         {
           "photosPermission": "$(PRODUCT_NAME) would like to access your photos to be able to save your mockups.",
-          "savePhotosPermission": "$(PRODUCT_NAME) would like to save your mockups to your device.",
-          "isAccessMediaLocationEnabled": true
+          "savePhotosPermission": "$(PRODUCT_NAME) would like to save your mockups to your device."
         }
       ]
     ],
