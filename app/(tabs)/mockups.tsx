@@ -3,12 +3,13 @@ import {
   Image,
   Platform,
   ActivityIndicator,
-  Pressable,
   ViewStyle,
   TextStyle,
   View,
   ScrollView,
   RefreshControl,
+  StatusBar as RNStatusBar,
+  TouchableOpacity,
 } from "react-native";
 import React, { useEffect, useState, useCallback } from "react";
 import { useMockups, Mockup, useGetMockup } from "@/app/api/mockups";
@@ -20,6 +21,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { TouchableCard } from "@/components/ui/Card";
 
 interface MockupCardProps {
   mockup: Mockup;
@@ -30,6 +32,14 @@ function MockupCard({ mockup }: MockupCardProps) {
   const router = useRouter();
   const { getMockup } = useGetMockup();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Define theme-specific colors
+  const deviceBadgeBg =
+    colorScheme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)";
+  const deviceTextColor =
+    colorScheme === "dark" ? "rgba(255, 255, 255, 0.9)" : "rgba(0, 0, 0, 0.9)";
+  const dateTextColor =
+    colorScheme === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)";
 
   const handlePress = async () => {
     try {
@@ -58,48 +68,84 @@ function MockupCard({ mockup }: MockupCardProps) {
     }
   };
 
+  const styles = StyleSheet.create({
+    cardContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      width: "100%",
+    },
+    mainSection: {
+      flex: 1,
+      marginRight: 16,
+    },
+    cardTitle: {
+      fontSize: 24,
+      fontWeight: "600",
+      marginBottom: 12,
+      lineHeight: 28,
+    },
+    deviceBadge: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 8,
+      alignSelf: "flex-start",
+      marginBottom: 8,
+      overflow: "hidden",
+    },
+    deviceText: {
+      fontSize: 14,
+    },
+    dateText: {
+      fontSize: 14,
+      fontStyle: "italic",
+    },
+  });
+
   return (
-    <Pressable onPress={handlePress} disabled={isLoading}>
-      <ThemedView style={styles.card}>
-        <View style={styles.cardContent}>
-          <View style={styles.mainSection}>
-            <ThemedText style={styles.cardTitle}>
-              {mockup.screenTitle}
-            </ThemedText>
-            <View style={styles.deviceBadge}>
-              <ThemedText style={styles.deviceText}>
-                {mockup.deviceInfo.model}
-              </ThemedText>
-            </View>
-            <ThemedText style={styles.dateText}>
-              {formatDistanceToNow(new Date(mockup.timestamp), {
-                addSuffix: true,
-              })}
+    <TouchableCard
+      onPress={handlePress}
+      disabled={isLoading}
+      variant="elevated"
+    >
+      <View style={styles.cardContent}>
+        <View style={styles.mainSection}>
+          <ThemedText style={styles.cardTitle}>{mockup.screenTitle}</ThemedText>
+          <View
+            style={[styles.deviceBadge, { backgroundColor: deviceBadgeBg }]}
+          >
+            <ThemedText style={[styles.deviceText, { color: deviceTextColor }]}>
+              {mockup.deviceInfo.model}
             </ThemedText>
           </View>
-          {isLoading ? (
-            <ActivityIndicator
-              size="small"
-              color={
-                colorScheme === "light"
-                  ? "rgba(0, 0, 0, 0.5)"
-                  : "rgba(255, 255, 255, 0.5)"
-              }
-            />
-          ) : (
-            <Ionicons
-              name="chevron-forward"
-              size={24}
-              color={
-                colorScheme === "light"
-                  ? "rgba(0, 0, 0, 0.5)"
-                  : "rgba(255, 255, 255, 0.5)"
-              }
-            />
-          )}
+          <ThemedText style={[styles.dateText, { color: dateTextColor }]}>
+            {formatDistanceToNow(new Date(mockup.timestamp), {
+              addSuffix: true,
+            })}
+          </ThemedText>
         </View>
-      </ThemedView>
-    </Pressable>
+        {isLoading ? (
+          <ActivityIndicator
+            size="small"
+            color={
+              colorScheme === "light"
+                ? "rgba(0, 0, 0, 0.5)"
+                : "rgba(255, 255, 255, 0.5)"
+            }
+          />
+        ) : (
+          <Ionicons
+            name="chevron-forward"
+            size={24}
+            color={
+              colorScheme === "light"
+                ? "rgba(0, 0, 0, 0.5)"
+                : "rgba(255, 255, 255, 0.5)"
+            }
+          />
+        )}
+      </View>
+    </TouchableCard>
   );
 }
 
@@ -111,6 +157,17 @@ export default function MockupsScreen() {
   const [error, setError] = useState<string | null>(null);
   const colorScheme = useColorScheme() ?? "light";
 
+  // Ensure status bar is visible
+  useEffect(() => {
+    RNStatusBar.setHidden(false);
+
+    if (Platform.OS === "android") {
+      RNStatusBar.setBackgroundColor(
+        colorScheme === "dark" ? "#1E1E1E" : "#F2F0FF"
+      );
+    }
+  }, [colorScheme]);
+
   const loadMockups = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) {
@@ -120,7 +177,11 @@ export default function MockupsScreen() {
       const data = await fetchUserMockups();
       setMockups(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred. Please try again."
+      );
     } finally {
       setIsInitialLoading(false);
     }
@@ -136,6 +197,81 @@ export default function MockupsScreen() {
   useEffect(() => {
     loadMockups(true);
   }, [loadMockups]);
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    content: {
+      flex: 1,
+      padding: 20,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: "bold",
+      marginBottom: 10,
+      lineHeight: 28,
+    },
+    subtitle: {
+      fontSize: 16,
+      opacity: 0.7,
+    },
+    titleContainer: {
+      flexDirection: "column",
+      marginBottom: 20,
+      paddingTop: Platform.OS === "ios" ? 60 : 40,
+    } as ViewStyle,
+    scrollView: {
+      flex: 1,
+    } as ViewStyle,
+    scrollViewContent: {
+      paddingBottom: Platform.OS === "ios" ? 100 : 80, // Add padding for tab bar
+    } as ViewStyle,
+    loadingContainer: {
+      padding: 20,
+      alignItems: "center",
+    } as ViewStyle,
+    loadingText: {
+      marginTop: 10,
+      color: "#808080",
+    } as TextStyle,
+    errorContainer: {
+      padding: 20,
+      borderRadius: 8,
+      marginBottom: 20,
+      textAlign: "center",
+      justifyContent: "center",
+      alignItems: "center",
+    } as ViewStyle,
+    errorText: {
+      color: "#FF3B30",
+      textAlign: "center",
+    } as TextStyle,
+    emptyContainer: {
+      padding: 20,
+      alignItems: "center",
+    } as ViewStyle,
+    emptyText: {
+      color: "#808080",
+      textAlign: "center",
+    } as TextStyle,
+    mockupsList: {
+      gap: 12,
+      paddingBottom: Platform.OS === "ios" ? 20 : 16, // Extra padding for last item
+    } as ViewStyle,
+
+    retryLink: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 8,
+    },
+    retryText: {
+      fontSize: 16,
+      color: colorScheme === "dark" ? "#007AFF" : "#0066CC",
+      marginLeft: 6,
+      fontWeight: "500",
+    },
+  });
 
   return (
     <ThemedView style={styles.container}>
@@ -178,6 +314,16 @@ export default function MockupsScreen() {
           ) : error ? (
             <ThemedView style={styles.errorContainer}>
               <ThemedText style={styles.errorText}>{error}</ThemedText>
+              <TouchableOpacity onPress={() => loadMockups(true)}>
+                <View style={styles.retryLink}>
+                  <Ionicons
+                    name="refresh-outline"
+                    size={18}
+                    color={colorScheme === "dark" ? "#007AFF" : "#0066CC"}
+                  />
+                  <ThemedText style={styles.retryText}>Retry</ThemedText>
+                </View>
+              </TouchableOpacity>
             </ThemedView>
           ) : mockups.length === 0 ? (
             <ThemedView style={styles.emptyContainer}>
@@ -197,111 +343,3 @@ export default function MockupsScreen() {
     </ThemedView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#FFFFFF",
-    lineHeight: 28,
-  },
-  subtitle: {
-    fontSize: 16,
-    opacity: 0.7,
-  },
-  titleContainer: {
-    flexDirection: "column",
-    marginBottom: 20,
-    paddingTop: Platform.OS === "ios" ? 60 : 40,
-  } as ViewStyle,
-  scrollView: {
-    flex: 1,
-  } as ViewStyle,
-  scrollViewContent: {
-    paddingBottom: Platform.OS === "ios" ? 100 : 80, // Add padding for tab bar
-  } as ViewStyle,
-  loadingContainer: {
-    padding: 20,
-    alignItems: "center",
-  } as ViewStyle,
-  loadingText: {
-    marginTop: 10,
-    color: "#808080",
-  } as TextStyle,
-  errorContainer: {
-    padding: 20,
-    backgroundColor: "#FFE5E5",
-    borderRadius: 8,
-    marginBottom: 20,
-  } as ViewStyle,
-  errorText: {
-    color: "#FF3B30",
-    textAlign: "center",
-  } as TextStyle,
-  emptyContainer: {
-    padding: 20,
-    alignItems: "center",
-  } as ViewStyle,
-  emptyText: {
-    color: "#808080",
-    textAlign: "center",
-  } as TextStyle,
-  mockupsList: {
-    gap: 12,
-    paddingBottom: Platform.OS === "ios" ? 20 : 16, // Extra padding for last item
-  } as ViewStyle,
-  card: {
-    backgroundColor: "rgba(45, 45, 69, 0.75)",
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-  },
-  cardContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  mainSection: {
-    flex: 1,
-    marginRight: 16,
-  },
-  cardTitle: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#FFFFFF",
-    marginBottom: 12,
-    lineHeight: 28,
-  },
-  deviceBadge: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    alignSelf: "flex-start",
-    marginBottom: 8,
-  },
-  deviceText: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.9)",
-  },
-  dateText: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.5)",
-    fontStyle: "italic",
-  },
-});

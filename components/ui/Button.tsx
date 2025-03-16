@@ -9,6 +9,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
@@ -32,11 +34,16 @@ export function Button({
   isLoading,
   ...props
 }: ButtonProps) {
+  const colorScheme = useColorScheme() ?? "light";
+
   const buttonStyles = [
     styles.button,
     variant === "primary" ? styles.primaryButton : styles.secondaryButton,
     fullWidth && styles.fullWidth,
-    disabled && styles.buttonDisabled,
+    disabled &&
+      (colorScheme === "dark"
+        ? styles.buttonDisabledDark
+        : styles.buttonDisabledLight),
     style,
   ];
 
@@ -96,8 +103,11 @@ const styles = StyleSheet.create({
   secondaryButton: {
     backgroundColor: "#FFFFFF",
   },
-  buttonDisabled: {
+  buttonDisabledDark: {
     backgroundColor: "#2D2D45",
+  },
+  buttonDisabledLight: {
+    backgroundColor: "#E0E0E0",
   },
   buttonIcon: {
     marginRight: 8,
