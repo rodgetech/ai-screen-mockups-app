@@ -10,6 +10,7 @@ import {
   Keyboard,
   Image,
   useColorScheme,
+  ScrollView,
 } from "react-native";
 import { useSignUp, useSSO } from "@clerk/clerk-expo";
 import { Link, useRouter } from "expo-router";
@@ -19,6 +20,7 @@ import { Button } from "@/components/ui/Button";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import * as Sentry from "@sentry/react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 export const useWarmUpBrowser = () => {
   useEffect(() => {
@@ -63,6 +65,43 @@ export default function SignUpScreen() {
       Sentry.captureException(err);
     }
   }, [startSSOFlow]);
+
+  const onAppleSignInPress = useCallback(async () => {
+    try {
+      const redirectUrl = AuthSession.makeRedirectUri({
+        scheme: "screenmockups",
+        path: "oauth-native-callback",
+      });
+      const { createdSessionId, setActive } = await startSSOFlow({
+        strategy: "oauth_apple",
+        redirectUrl,
+      });
+
+      if (createdSessionId) {
+        setActive!({ session: createdSessionId });
+      }
+    } catch (err) {
+      Sentry.captureException(err);
+    }
+  }, [startSSOFlow]);
+
+  // Custom Apple button with white text
+  const AppleButton = () => (
+    <TouchableOpacity
+      style={[styles.button, styles.socialButton, styles.appleButton]}
+      onPress={onAppleSignInPress}
+    >
+      <Ionicons
+        name="logo-apple"
+        size={20}
+        color="#FFFFFF"
+        style={styles.buttonIcon}
+      />
+      <ThemedText style={[styles.buttonText, styles.appleButtonText]}>
+        Continue with Apple
+      </ThemedText>
+    </TouchableOpacity>
+  );
 
   // Handle submission of sign-up form
   const onSignUpPress = async () => {
@@ -134,84 +173,90 @@ export default function SignUpScreen() {
             { backgroundColor: colorScheme === "dark" ? "#1E1E1E" : "#FFFFFF" },
           ]}
         >
-          <ThemedView style={styles.content}>
-            <Image
-              source={require("@/assets/images/icon-transparent.png")}
-              style={styles.icon}
-            />
-            <ThemedText
-              style={[
-                styles.title,
-                { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
-              ]}
+          <ThemedView style={styles.container}>
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={styles.content}
+              showsVerticalScrollIndicator={false}
             >
-              Verify Your Email
-            </ThemedText>
-            <ThemedText
-              style={[
-                styles.subtitle,
-                { color: colorScheme === "dark" ? "#CCCCCC" : "#666666" },
-              ]}
-            >
-              We've sent a verification code to your email
-            </ThemedText>
-
-            <View
-              style={[
-                styles.inputContainer,
-                {
-                  backgroundColor:
-                    colorScheme === "dark"
-                      ? "rgba(45, 45, 69, 0.75)"
-                      : "rgba(240, 240, 245, 0.75)",
-                  borderColor:
-                    colorScheme === "dark"
-                      ? "rgba(255, 255, 255, 0.1)"
-                      : "rgba(0, 0, 0, 0.1)",
-                },
-              ]}
-            >
-              <TextInput
+              <Image
+                source={require("@/assets/images/icon-transparent.png")}
+                style={styles.icon}
+              />
+              <ThemedText
                 style={[
-                  styles.input,
+                  styles.title,
                   { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
                 ]}
-                value={code}
-                placeholder="Enter verification code"
-                placeholderTextColor={
-                  colorScheme === "dark" ? "#999" : "#AAAAAA"
-                }
-                onChangeText={setCode}
-                keyboardType="number-pad"
-                autoComplete="off"
+              >
+                Verify Your Email
+              </ThemedText>
+              <ThemedText
+                style={[
+                  styles.subtitle,
+                  { color: colorScheme === "dark" ? "#CCCCCC" : "#666666" },
+                ]}
+              >
+                We've sent a verification code to your email
+              </ThemedText>
+
+              <View
+                style={[
+                  styles.inputContainer,
+                  {
+                    backgroundColor:
+                      colorScheme === "dark"
+                        ? "rgba(45, 45, 69, 0.75)"
+                        : "rgba(240, 240, 245, 0.75)",
+                    borderColor:
+                      colorScheme === "dark"
+                        ? "rgba(255, 255, 255, 0.1)"
+                        : "rgba(0, 0, 0, 0.1)",
+                  },
+                ]}
+              >
+                <TextInput
+                  style={[
+                    styles.input,
+                    { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
+                  ]}
+                  value={code}
+                  placeholder="Enter verification code"
+                  placeholderTextColor={
+                    colorScheme === "dark" ? "#999" : "#AAAAAA"
+                  }
+                  onChangeText={setCode}
+                  keyboardType="number-pad"
+                  autoComplete="off"
+                />
+              </View>
+              {errors.code && (
+                <ThemedText style={styles.errorText}>{errors.code}</ThemedText>
+              )}
+
+              <Button
+                title="Verify Email"
+                onPress={onVerifyPress}
+                disabled={!isLoaded || !code.trim()}
+                icon={{ name: "checkmark-outline" }}
+                style={styles.actionButton}
               />
-            </View>
-            {errors.code && (
-              <ThemedText style={styles.errorText}>{errors.code}</ThemedText>
-            )}
 
-            <Button
-              title="Verify Email"
-              onPress={onVerifyPress}
-              disabled={!isLoaded || !code.trim()}
-              icon={{ name: "checkmark-outline" }}
-              style={styles.actionButton}
-            />
+              {errors.general && (
+                <ThemedText style={[styles.errorText, styles.generalError]}>
+                  {errors.general}
+                </ThemedText>
+              )}
 
-            {errors.general && (
-              <ThemedText style={[styles.errorText, styles.generalError]}>
-                {errors.general}
-              </ThemedText>
-            )}
-
-            <View style={styles.signInContainer}>
-              <ThemedText style={styles.signInText}>
-                Already have an account?
-              </ThemedText>
-              <Link href="/sign-in" replace>
-                <ThemedText style={styles.signInLink}>Sign in</ThemedText>
-              </Link>
-            </View>
+              <View style={styles.signInContainer}>
+                <ThemedText style={styles.signInText}>
+                  Already have an account?
+                </ThemedText>
+                <Link href="/sign-in" replace>
+                  <ThemedText style={styles.signInLink}>Sign in</ThemedText>
+                </Link>
+              </View>
+            </ScrollView>
           </ThemedView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
@@ -219,15 +264,19 @@ export default function SignUpScreen() {
   }
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={[
-          styles.container,
-          { backgroundColor: colorScheme === "dark" ? "#1E1E1E" : "#FFFFFF" },
-        ]}
-      >
-        <ThemedView style={styles.content}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === "dark" ? "#1E1E1E" : "#FFFFFF" },
+      ]}
+    >
+      <ThemedView style={styles.container}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
           <Image
             source={require("@/assets/images/icon-transparent.png")}
             style={styles.icon}
@@ -246,8 +295,24 @@ export default function SignUpScreen() {
               { color: colorScheme === "dark" ? "#CCCCCC" : "#666666" },
             ]}
           >
-            Sign up to get started with AI Screen Mockups
+            Sign up to get started with Screen Mockups
           </ThemedText>
+
+          <AppleButton />
+
+          <Button
+            title="Continue with Google"
+            onPress={onGoogleSignInPress}
+            icon={{ name: "logo-google" }}
+            variant="secondary"
+            style={styles.socialButton}
+          />
+
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <ThemedText style={styles.dividerText}>or use email</ThemedText>
+            <View style={styles.dividerLine} />
+          </View>
 
           <View
             style={[
@@ -336,20 +401,6 @@ export default function SignUpScreen() {
             </ThemedText>
           )}
 
-          <View style={styles.dividerContainer}>
-            <View style={styles.dividerLine} />
-            <ThemedText style={styles.dividerText}>or</ThemedText>
-            <View style={styles.dividerLine} />
-          </View>
-
-          <Button
-            title="Continue with Google"
-            onPress={onGoogleSignInPress}
-            icon={{ name: "logo-google" }}
-            variant="secondary"
-            style={styles.socialButton}
-          />
-
           <View style={styles.signInContainer}>
             <ThemedText style={styles.signInText}>
               Already have an account?
@@ -358,9 +409,9 @@ export default function SignUpScreen() {
               <ThemedText style={styles.signInLink}>Sign in</ThemedText>
             </Link>
           </View>
-        </ThemedView>
-      </KeyboardAvoidingView>
-    </TouchableWithoutFeedback>
+        </ScrollView>
+      </ThemedView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -368,10 +419,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
     padding: 20,
     paddingTop: Platform.OS === "ios" ? 100 : 60,
+    paddingBottom: 90,
   },
   title: {
     fontSize: 34,
@@ -439,7 +493,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     alignSelf: "center",
-    marginBottom: 24,
+    marginBottom: 4,
   },
   dividerContainer: {
     flexDirection: "row",
@@ -459,5 +513,36 @@ const styles = StyleSheet.create({
   socialButton: {
     backgroundColor: "#FFFFFF",
     marginBottom: 16,
+  },
+  button: {
+    borderRadius: 12,
+    padding: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    width: "100%",
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  appleButton: {
+    backgroundColor: "#000000",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 10,
+  },
+  appleButtonText: {
+    color: "#FFFFFF",
   },
 });

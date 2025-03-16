@@ -9,6 +9,8 @@ import {
   Pressable,
   Image,
   useColorScheme,
+  TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import React, { useCallback, useEffect } from "react";
 import { ThemedText } from "@/components/ThemedText";
@@ -17,6 +19,7 @@ import { Button } from "@/components/ui/Button";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import * as Sentry from "@sentry/react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 export const useWarmUpBrowser = () => {
   useEffect(() => {
@@ -117,7 +120,58 @@ export default function Page() {
     }
   }, []);
 
+  const onAppleSignInPress = useCallback(async () => {
+    try {
+      const redirectUrl = AuthSession.makeRedirectUri({
+        scheme: "screenmockups",
+        path: "oauth-native-callback",
+      });
+      // Start the authentication process by calling `startSSOFlow()`
+      const { createdSessionId, setActive, signIn, signUp } =
+        await startSSOFlow({
+          strategy: "oauth_apple",
+          redirectUrl,
+        });
+
+      // If sign in was successful, set the active session
+      if (createdSessionId) {
+        setActive!({ session: createdSessionId });
+      } else {
+        // If there is no `createdSessionId`,
+        // there are missing requirements, such as MFA
+        // Use the `signIn` or `signUp` returned from `startSSOFlow`
+        // to handle next steps
+      }
+    } catch (err) {
+      if (isClerkRuntimeError(err) && err.code === "network_error") {
+        setErrors({ general: "Network error. Please try again." });
+        Sentry.captureException(err);
+      } else {
+        Sentry.captureException(err);
+        setErrors({ general: "An error occurred. Please try again." });
+      }
+    }
+  }, []);
+
   const isDisabled = !isLoaded || !emailAddress.trim() || !password.trim();
+
+  // Custom Apple button with white text
+  const AppleButton = () => (
+    <TouchableOpacity
+      style={[styles.button, styles.socialButton, styles.appleButton]}
+      onPress={onAppleSignInPress}
+    >
+      <Ionicons
+        name="logo-apple"
+        size={20}
+        color="#FFFFFF"
+        style={styles.buttonIcon}
+      />
+      <ThemedText style={[styles.buttonText, styles.appleButtonText]}>
+        Continue with Apple
+      </ThemedText>
+    </TouchableOpacity>
+  );
 
   return (
     <KeyboardAvoidingView
@@ -127,137 +181,147 @@ export default function Page() {
         { backgroundColor: colorScheme === "dark" ? "#1E1E1E" : "#FFFFFF" },
       ]}
     >
-      <ThemedView style={styles.content}>
-        <Image
-          source={require("@/assets/images/icon-transparent.png")}
-          style={styles.icon}
-        />
-        <ThemedText
-          style={[
-            styles.title,
-            { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
-          ]}
+      <ThemedView style={styles.container}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
         >
-          Welcome Back
-        </ThemedText>
-        <ThemedText
-          style={[
-            styles.subtitle,
-            { color: colorScheme === "dark" ? "#CCCCCC" : "#666666" },
-          ]}
-        >
-          Sign in to your account to continue
-        </ThemedText>
-
-        <ThemedView
-          style={[
-            styles.inputContainer,
-            {
-              backgroundColor:
-                colorScheme === "dark"
-                  ? "rgba(45, 45, 69, 0.75)"
-                  : "rgba(240, 240, 245, 0.75)",
-              borderColor:
-                colorScheme === "dark"
-                  ? "rgba(255, 255, 255, 0.1)"
-                  : "rgba(0, 0, 0, 0.1)",
-            },
-          ]}
-        >
-          <TextInput
+          <Image
+            source={require("@/assets/images/icon-transparent.png")}
+            style={styles.icon}
+          />
+          <ThemedText
             style={[
-              styles.input,
+              styles.title,
               { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
             ]}
-            placeholder="Enter email"
-            placeholderTextColor={colorScheme === "dark" ? "#999" : "#AAAAAA"}
-            autoCapitalize="none"
-            value={emailAddress}
-            onChangeText={(text) => {
-              setEmailAddress(text);
-              setErrors((prev) => ({ ...prev, identifier: "", general: "" }));
-            }}
-            keyboardType="email-address"
-            autoComplete="email"
-          />
-        </ThemedView>
-        {errors.identifier && (
-          <ThemedText style={styles.errorText}>{errors.identifier}</ThemedText>
-        )}
-
-        <ThemedView
-          style={[
-            styles.inputContainer,
-            {
-              backgroundColor:
-                colorScheme === "dark"
-                  ? "rgba(45, 45, 69, 0.75)"
-                  : "rgba(240, 240, 245, 0.75)",
-              borderColor:
-                colorScheme === "dark"
-                  ? "rgba(255, 255, 255, 0.1)"
-                  : "rgba(0, 0, 0, 0.1)",
-            },
-          ]}
-        >
-          <TextInput
+          >
+            Welcome Back
+          </ThemedText>
+          <ThemedText
             style={[
-              styles.input,
-              { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
+              styles.subtitle,
+              { color: colorScheme === "dark" ? "#CCCCCC" : "#666666" },
             ]}
-            placeholder="Enter password"
-            placeholderTextColor={colorScheme === "dark" ? "#999" : "#AAAAAA"}
-            secureTextEntry={true}
-            value={password}
-            onChangeText={(text) => {
-              setPassword(text);
-              setErrors((prev) => ({ ...prev, password: "", general: "" }));
-            }}
-            autoComplete="password"
+          >
+            Sign in to your Screen Mockups account
+          </ThemedText>
+
+          <AppleButton />
+
+          <Button
+            title="Continue with Google"
+            onPress={onGoogleSignInPress}
+            icon={{ name: "logo-google" }}
+            variant="secondary"
+            style={styles.socialButton}
           />
-        </ThemedView>
-        {errors.password && (
-          <ThemedText style={styles.errorText}>{errors.password}</ThemedText>
-        )}
 
-        <Button
-          title="Sign In"
-          onPress={onSignInPress}
-          disabled={isDisabled}
-          icon={{ name: "log-in-outline" }}
-          style={styles.signInButton}
-        />
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <ThemedText style={styles.dividerText}>or use email</ThemedText>
+            <View style={styles.dividerLine} />
+          </View>
 
-        {errors.general && (
-          <ThemedText style={[styles.errorText, styles.generalError]}>
-            {errors.general}
-          </ThemedText>
-        )}
+          <ThemedView
+            style={[
+              styles.inputContainer,
+              {
+                backgroundColor:
+                  colorScheme === "dark"
+                    ? "rgba(45, 45, 69, 0.75)"
+                    : "rgba(240, 240, 245, 0.75)",
+                borderColor:
+                  colorScheme === "dark"
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "rgba(0, 0, 0, 0.1)",
+              },
+            ]}
+          >
+            <TextInput
+              style={[
+                styles.input,
+                { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
+              ]}
+              placeholder="Enter email"
+              placeholderTextColor={colorScheme === "dark" ? "#999" : "#AAAAAA"}
+              autoCapitalize="none"
+              value={emailAddress}
+              onChangeText={(text) => {
+                setEmailAddress(text);
+                setErrors((prev) => ({ ...prev, identifier: "", general: "" }));
+              }}
+              keyboardType="email-address"
+              autoComplete="email"
+            />
+          </ThemedView>
+          {errors.identifier && (
+            <ThemedText style={styles.errorText}>
+              {errors.identifier}
+            </ThemedText>
+          )}
 
-        <View style={styles.dividerContainer}>
-          <View style={styles.dividerLine} />
-          <ThemedText style={styles.dividerText}>or</ThemedText>
-          <View style={styles.dividerLine} />
-        </View>
+          <ThemedView
+            style={[
+              styles.inputContainer,
+              {
+                backgroundColor:
+                  colorScheme === "dark"
+                    ? "rgba(45, 45, 69, 0.75)"
+                    : "rgba(240, 240, 245, 0.75)",
+                borderColor:
+                  colorScheme === "dark"
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "rgba(0, 0, 0, 0.1)",
+              },
+            ]}
+          >
+            <TextInput
+              style={[
+                styles.input,
+                { color: colorScheme === "dark" ? "#FFFFFF" : "#000000" },
+              ]}
+              placeholder="Enter password"
+              placeholderTextColor={colorScheme === "dark" ? "#999" : "#AAAAAA"}
+              secureTextEntry={true}
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                setErrors((prev) => ({ ...prev, password: "", general: "" }));
+              }}
+              autoComplete="password"
+            />
+          </ThemedView>
+          {errors.password && (
+            <ThemedText style={styles.errorText}>{errors.password}</ThemedText>
+          )}
 
-        <Button
-          title="Continue with Google"
-          onPress={onGoogleSignInPress}
-          icon={{ name: "logo-google" }}
-          variant="secondary"
-          style={styles.socialButton}
-        />
+          <Button
+            title="Sign In"
+            onPress={onSignInPress}
+            disabled={isDisabled}
+            icon={{ name: "log-in-outline" }}
+            style={styles.signInButton}
+          />
 
-        <View style={styles.signUpContainer}>
-          <ThemedText style={styles.signUpText}>
-            Don't have an account?
-          </ThemedText>
-          <Link href="/sign-up" replace asChild>
-            <Pressable>
-              <ThemedText style={styles.signUpLink}>Sign up</ThemedText>
-            </Pressable>
-          </Link>
-        </View>
+          {errors.general && (
+            <ThemedText style={[styles.errorText, styles.generalError]}>
+              {errors.general}
+            </ThemedText>
+          )}
+
+          <View style={styles.signUpContainer}>
+            <ThemedText style={styles.signUpText}>
+              Don't have an account?
+            </ThemedText>
+            <Link href="/sign-up" replace asChild>
+              <Pressable>
+                <ThemedText style={styles.signUpLink}>Sign up</ThemedText>
+              </Pressable>
+            </Link>
+          </View>
+        </ScrollView>
       </ThemedView>
     </KeyboardAvoidingView>
   );
@@ -267,10 +331,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
     padding: 20,
     paddingTop: Platform.OS === "ios" ? 100 : 60,
+    paddingBottom: 90,
   },
   title: {
     fontSize: 34,
@@ -320,6 +387,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginVertical: 24,
+    marginTop: 10,
   },
   dividerLine: {
     flex: 1,
@@ -334,6 +402,14 @@ const styles = StyleSheet.create({
   socialButton: {
     backgroundColor: "#FFFFFF",
     marginBottom: 16,
+  },
+  appleButton: {
+    backgroundColor: "#000000",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 10,
   },
   signUpContainer: {
     flexDirection: "row",
@@ -355,6 +431,29 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     alignSelf: "center",
-    marginBottom: 24,
+    marginBottom: 4,
+  },
+  button: {
+    borderRadius: 12,
+    padding: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    width: "100%",
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  appleButtonText: {
+    color: "#FFFFFF",
   },
 });
