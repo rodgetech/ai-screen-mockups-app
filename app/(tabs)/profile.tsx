@@ -43,6 +43,7 @@ export default function ProfileScreen() {
       router.replace("/sign-in");
     } catch (err) {
       console.error("Error signing out:", err);
+      Alert.alert("Sign Out Failed", "Failed to sign out. Please try again.");
     }
   };
 
