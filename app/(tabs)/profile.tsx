@@ -260,9 +260,9 @@ export default function ProfileScreen() {
                   ? `${user.firstName} ${user.lastName || ""}`
                   : user?.emailAddresses[0]?.emailAddress}
               </ThemedText>
-              <ThemedText style={styles.email}>
+              {/* <ThemedText style={styles.email}>
                 {user?.emailAddresses[0]?.emailAddress}
-              </ThemedText>
+              </ThemedText> */}
             </View>
 
             <Button
