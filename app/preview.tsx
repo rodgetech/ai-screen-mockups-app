@@ -303,6 +303,11 @@ export default function PreviewScreen() {
                 <ThemedText style={styles.loadingText}>
                   {isEditing ? "Updating mockup..." : "Rendering preview..."}
                 </ThemedText>
+                <ThemedText style={styles.loadingSubText}>
+                  {isEditing
+                    ? "This may take around 1 minute. Please be patient."
+                    : "Please wait while we prepare your mockup. This may take around 1 minute."}
+                </ThemedText>
               </View>
             </BlurView>
           )}
@@ -472,6 +477,14 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "500",
     color: "#333",
+  },
+  loadingSubText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    maxWidth: 240,
+    fontStyle: "italic",
   },
   errorContainer: {
     flex: 1,

@@ -276,6 +276,23 @@ export default function HomeScreen() {
                   disabled={!prompt.trim()}
                   isLoading={isGenerating}
                 />
+
+                {isGenerating && (
+                  <ThemedText
+                    style={[
+                      styles.generatingText,
+                      {
+                        color:
+                          colorScheme === "dark"
+                            ? "rgba(255, 255, 255, 0.6)"
+                            : "rgba(0, 0, 0, 0.6)",
+                      },
+                    ]}
+                  >
+                    Please be patient. Creating your mockup may take around 1
+                    minute...
+                  </ThemedText>
+                )}
               </View>
             </Card>
 
@@ -427,5 +444,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",
+  },
+  modalCheckbox: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 16,
+  },
+  modalCheckboxText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: "#666",
+  },
+  generatingText: {
+    marginTop: 12,
+    fontSize: 14,
+    textAlign: "center",
+    fontStyle: "italic",
   },
 });
