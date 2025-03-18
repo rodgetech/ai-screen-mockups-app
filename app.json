@@ -2,7 +2,7 @@
   "expo": {
     "name": "Screen Mockups",
     "slug": "ai-screen-mockups",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/sm-icon.png",
     "scheme": "screenmockups",
