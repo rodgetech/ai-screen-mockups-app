@@ -136,11 +136,10 @@ export default function CreditsScreen() {
 
   const renderCreditCard = (
     title: string,
-    used: number,
+    remaining: number,
     total: number,
     icon: keyof typeof Ionicons.glyphMap
   ) => {
-    const remaining = total - used;
     const isDepletedCredits = remaining === 0;
 
     return (
@@ -184,7 +183,7 @@ export default function CreditsScreen() {
               isDepletedCredits && styles.depletedCreditsCount,
             ]}
           >
-            {used} / {total}
+            {remaining}
           </ThemedText>
         </View>
       </View>
@@ -263,7 +262,8 @@ export default function CreditsScreen() {
       marginBottom: 8,
     },
     creditCount: {
-      fontSize: 16,
+      fontSize: 20,
+      fontWeight: "bold",
       color:
         colorScheme === "dark"
           ? "rgba(255, 255, 255, 0.6)"
@@ -492,15 +492,14 @@ export default function CreditsScreen() {
                   <View style={styles.creditsRow}>
                     {renderCreditCard(
                       "Screen Credits",
-                      credits.screenCredits - credits.remainingScreenCredits,
+                      credits.remainingScreenCredits,
                       credits.screenCredits,
                       "phone-portrait"
                     )}
                     <View style={styles.divider} />
                     {renderCreditCard(
                       "Revision Credits",
-                      credits.revisionCredits -
-                        credits.remainingRevisionCredits,
+                      credits.remainingRevisionCredits,
                       credits.revisionCredits,
                       "git-branch"
                     )}

@@ -26,6 +26,14 @@ import { useEditMockup } from "@/app/api/mockups";
 import ViewShot, { captureRef } from "react-native-view-shot";
 import * as MediaLibrary from "expo-media-library";
 import { useCreditsStore } from "@/app/stores/credits";
+import Animated, {
+  useSharedValue,
+  withTiming,
+  withDelay,
+  Easing,
+  withSequence,
+  withRepeat,
+} from "react-native-reanimated";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -53,6 +61,9 @@ export default function PreviewScreen() {
   );
   const { editMockup } = useEditMockup();
   const { credits, setCredits } = useCreditsStore();
+  const [isScreenshotting, setIsScreenshotting] = useState(false);
+  const flashOpacity = useSharedValue(0);
+  const screenshotScale = useSharedValue(1);
 
   // Hide/show status bar based on state
   useEffect(() => {
@@ -145,9 +156,17 @@ export default function PreviewScreen() {
     try {
       // Temporarily hide controls
       setShowControls(false);
+      setIsScreenshotting(true);
 
       // Small delay to ensure UI updates before screenshot
       await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Flash animation
+      flashOpacity.value = 0.5;
+      flashOpacity.value = withTiming(0, {
+        duration: 500,
+        easing: Easing.out(Easing.exp),
+      });
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       const uri = await captureRef(viewShotRef);
@@ -159,12 +178,24 @@ export default function PreviewScreen() {
     } finally {
       // Restore controls after screenshot is taken
       setShowControls(true);
+      setIsScreenshotting(false);
     }
   };
 
   const toggleControls = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setShowControls(!showControls);
+
+    // Animate screenshot button when controls appear
+    if (!showControls) {
+      // Starting animation after controls appear
+      setTimeout(() => {
+        screenshotScale.value = withSequence(
+          withTiming(1.15, { duration: 300, easing: Easing.out(Easing.ease) }),
+          withTiming(1, { duration: 300, easing: Easing.in(Easing.ease) })
+        );
+      }, 200);
+    }
   };
 
   const handleEditPress = () => {
@@ -258,6 +289,12 @@ export default function PreviewScreen() {
             key={`${currentHtml}-${showStatusBar}`} // Force re-render when HTML or status bar changes
           />
 
+          {/* Screenshot flash effect */}
+          <Animated.View
+            style={[styles.flashOverlay, { opacity: flashOpacity }]}
+            pointerEvents="none"
+          />
+
           {/* Loading indicator */}
           {(isLoading || isEditing) && (
             <BlurView intensity={50} style={styles.loadingContainer}>
@@ -272,47 +309,56 @@ export default function PreviewScreen() {
 
           {/* Floating controls that appear when tapping the screen */}
           {showControls && (
-            <SafeAreaView style={styles.floatingControls}>
-              <TouchableOpacity
-                style={styles.controlButton}
-                onPress={handleBackPress}
-              >
-                <Ionicons name="arrow-back" size={22} color="#fff" />
-              </TouchableOpacity>
-
-              <View style={styles.controlsRight}>
+            <>
+              <View style={styles.floatingControls}>
                 <TouchableOpacity
                   style={styles.controlButton}
-                  onPress={toggleStatusBar}
+                  onPress={handleBackPress}
                 >
-                  <Ionicons
-                    name={
-                      showStatusBar
-                        ? "phone-portrait"
-                        : "phone-portrait-outline"
-                    }
-                    size={22}
-                    color="#fff"
-                  />
+                  <Ionicons name="arrow-back" size={24} color="#fff" />
                 </TouchableOpacity>
 
-                {source === "generated" && (
+                <View style={styles.controlsRight}>
                   <TouchableOpacity
-                    style={[styles.controlButton, styles.controlButtonMargin]}
-                    onPress={handleEditPress}
+                    style={styles.controlButton}
+                    onPress={toggleStatusBar}
                   >
-                    <Ionicons name="pencil" size={22} color="#fff" />
+                    <Ionicons
+                      name={
+                        showStatusBar
+                          ? "phone-portrait"
+                          : "phone-portrait-outline"
+                      }
+                      size={24}
+                      color="#fff"
+                    />
                   </TouchableOpacity>
-                )}
 
-                <TouchableOpacity
-                  style={[styles.controlButton, styles.controlButtonMargin]}
-                  onPress={handleScreenshot}
-                >
-                  <Ionicons name="camera-outline" size={22} color="#fff" />
-                </TouchableOpacity>
+                  {source === "generated" && (
+                    <TouchableOpacity
+                      style={[styles.controlButton, styles.controlButtonMargin]}
+                      onPress={handleEditPress}
+                    >
+                      <Ionicons name="pencil" size={24} color="#fff" />
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
-            </SafeAreaView>
+
+              {/* Bottom centered screenshot button */}
+              <View style={styles.bottomControlsContainer}>
+                <Animated.View
+                  style={[{ transform: [{ scale: screenshotScale }] }]}
+                >
+                  <TouchableOpacity
+                    style={styles.screenshotButton}
+                    onPress={handleScreenshot}
+                  >
+                    <Ionicons name="camera-outline" size={28} color="#fff" />
+                  </TouchableOpacity>
+                </Animated.View>
+              </View>
+            </>
           )}
 
           {/* Edit Modal */}
@@ -455,28 +501,55 @@ const styles = StyleSheet.create({
   },
   floatingControls: {
     position: "absolute",
-    top: 0,
+    top: Platform.OS === "ios" ? 40 : 50,
     left: 0,
     right: 0,
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 16,
     marginHorizontal: 20,
-    paddingTop: Platform.OS === "ios" ? 50 : 16,
   },
   controlsRight: {
     flexDirection: "row",
   },
   controlButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
   },
   controlButtonMargin: {
     marginLeft: 12,
+  },
+  bottomControlsContainer: {
+    position: "absolute",
+    bottom: Platform.OS === "ios" ? 40 : 30,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  screenshotButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "rgba(0, 122, 255, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   modalContainer: {
     flex: 1,
@@ -540,5 +613,15 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  flashOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "white",
+    zIndex: 20,
+    pointerEvents: "none",
   },
 });
